@@ -6,9 +6,9 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGReference.h>
 #import <IJSVGParserUtils.h>
+#import <IJSVGXML.h>
 
 @implementation IJSVGReference
 

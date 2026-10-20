@@ -6,8 +6,8 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGStop.h>
+#import <IJSVGXML.h>
 
 typedef struct {
     CFTypeRef offset;

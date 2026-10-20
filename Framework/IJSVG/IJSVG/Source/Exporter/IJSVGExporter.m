@@ -1187,7 +1187,7 @@ NSString* IJSVGHash(NSString* key)
         // create the stop element
         IJSVGExportElement* stop = [[IJSVGExportElement alloc] initWithName:@"stop"];
 
-        // Preserve the existing six-significant-digit offset representation.
+        // Preserve the existing offset representation with six significant digits.
         char offsetBytes[64];
         int offsetLength = snprintf(offsetBytes, sizeof(offsetBytes), "%g%%", location * 100);
         NSString* offset;
@@ -1998,7 +1998,7 @@ NSString* IJSVGHash(NSString* key)
         [element setAttributeWithName:IJSVGAttributeOpacity stringValue:IJSVGShortFloatStringWithOptions(paint.opacity, _floatingPointOptions)];
     }
 
-    // Most paints have no inline style; allocate only when one is needed.
+    // Most paints have no inline style. Allocate only when one is needed.
     NSString* blend = paint.blendingMode == kCGBlendModeNormal ? nil : [IJSVGUtils mixBlendingModeForBlendMode:(IJSVGBlendMode)paint.blendingMode];
     if (paint.isolated || blend != nil || paint.hidden) {
         NSMutableString* style = [[NSMutableString alloc] init];
@@ -2315,7 +2315,7 @@ static BOOL IJSVGExporterFilterHasContextualImage(NSArray<IJSVGFilterPrimitive*>
     BOOL canReuse = self.delegate == nil;
     NSArray<IJSVGFilterPrimitive*>* primitives = filter.primitives;
 
-    // Fragment feImage export resolves its region against this paint's bounds
+    // Fragment feImage export resolves its region against the bounds of this paint
     // and viewport. It must retain a separate definition for each application.
     canReuse = canReuse && !IJSVGExporterFilterHasContextualImage(primitives);
     IJSVGExportElement* definition = nil;
@@ -2339,7 +2339,7 @@ static BOOL IJSVGExporterFilterHasContextualImage(NSArray<IJSVGFilterPrimitive*>
             identifier = [self identifierForElement:definition];
         }
 
-        // Keep the delegate's original callback timing and custom attributes.
+        // Keep the original delegate callback timing and custom attributes.
         [definition setAttributeWithName:IJSVGAttributeID stringValue:identifier];
         IJSVGApplyAttributesToElement(attributes, definition);
         for (NSArray* child in children) {

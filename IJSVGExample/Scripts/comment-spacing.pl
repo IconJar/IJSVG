@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#  comment-spacing.pl
+#  comment spacing.pl
 #  IJSVGExample
 #
 #  Created by Curtis Hard on 13/10/2026.

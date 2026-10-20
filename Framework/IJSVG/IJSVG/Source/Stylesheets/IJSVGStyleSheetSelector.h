@@ -78,6 +78,7 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorNodeKind) {
 
 + (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string forgiving:(BOOL)forgiving;
 + (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string namespaces:(NSDictionary<NSString*, NSString*>*)namespaces;
++ (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string namespaces:(NSDictionary<NSString*, NSString*>*)namespaces parentSelectors:(NSArray<IJSVGStyleSheetSelector*>*)parents;
 - (id)initWithSelectorString:(NSString*)string;
 - (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node;
 

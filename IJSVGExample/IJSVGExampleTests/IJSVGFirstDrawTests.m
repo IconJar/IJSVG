@@ -6,8 +6,8 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
 #import <IJSVGQuartzRenderer.h>
+#import <IJSVGTestHelpers.h>
 
 @interface IJSVGFirstDrawTests : XCTestCase
 @end

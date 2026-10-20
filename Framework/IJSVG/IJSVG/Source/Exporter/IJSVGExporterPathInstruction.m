@@ -112,7 +112,7 @@ static const char* IJSVGExporterFormatPathFloat(CGFloat value, IJSVGFloatingPoin
     }
 
     // %g prints integral coordinates below one million without an exponent.
-    // Emit these directly, avoiding both floating-point formatting and cache
+    // Emit these directly, avoiding both floating point formatting and cache
     // lookup for the common integer geometry case. Preserve negative zero.
     if (value > -1000000 && value < 1000000) {
         int integer = (int)value;
@@ -298,7 +298,7 @@ static NSUInteger IJSVGExporterPathInstructionStringLength(char instruction, CGF
 
 + (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions formatCache:(IJSVGExporterNumberCache*)cache
 {
-    // All commands and formatted numbers are UTF-8 bytes. Decode once after
+    // All commands and formatted numbers are UTF8 bytes. Decode once after
     // appending instead of updating a Unicode string for every coordinate.
     CFMutableDataRef bytes = CFDataCreateMutable(kCFAllocatorDefault, 0);
     if (bytes == NULL) {

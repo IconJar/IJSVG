@@ -125,6 +125,7 @@ static NSString* IJSVGStyleSheetResolvedVariableProperty(NSString* property, NSS
         return;
     }
     _dict[key] = value;
+    _hasCascadeDependentValues |= source != nil || IJSVGCSSWideKeywordFromString(value) == IJSVGCSSWideKeywordRevertLayer;
     [_invalidVariableProperties removeObject:key];
     if ([key hasPrefix:@"--"]) {
         _hasCustomProperties = YES;
@@ -185,6 +186,49 @@ static NSString* IJSVGStyleSheetResolvedVariableProperty(NSString* property, NSS
     }
 }
 
+- (BOOL)hasVariableProperties
+{
+    return _variableSources.count != 0;
+}
+
+- (BOOL)hasCascadeDependentValues
+{
+    return _hasCascadeDependentValues;
+}
+
+- (void)suppressNormalInlineProperty:(NSString*)property
+{
+    if (_normalInlineRollbacks == nil) {
+        _normalInlineRollbacks = [[NSMutableSet alloc] init];
+    }
+    [_normalInlineRollbacks addObject:property];
+}
+
+- (BOOL)suppressesNormalInlineProperty:(NSString*)property
+{
+    return [self isPropertyImportant:property] || [_normalInlineRollbacks containsObject:property];
+}
+
+- (IJSVGStyleSheetStyle*)styleByRemovingLayerReverts
+{
+    if (!_hasCascadeDependentValues) {
+        return self;
+    }
+    IJSVGStyleSheetStyle* result = nil;
+    for (NSString* property in _dict) {
+        if (IJSVGCSSWideKeywordFromString(_dict[property]) == IJSVGCSSWideKeywordRevertLayer) {
+            if (result == nil) {
+                result = [[IJSVGStyleSheetStyle alloc] init];
+                [result addPropertiesFromStyle:self];
+            }
+            [result->_dict removeObjectForKey:property];
+            [result->_importantProperties removeObject:property];
+            [result->_variableSources removeObjectForKey:property];
+        }
+    }
+    return result ?: self;
+}
+
 - (BOOL)hasCustomProperties
 {
     return _hasCustomProperties;
@@ -207,6 +251,9 @@ static NSString* IJSVGStyleSheetResolvedVariableProperty(NSString* property, NSS
 
 - (IJSVGStyleSheetStyle*)styleByResolvingVariables:(NSDictionary<NSString*, id>*)properties
 {
+    if (_layerResolver != nil) {
+        return _layerResolver(properties);
+    }
     if (_variableSources.count == 0) {
         return self;
     }
@@ -219,7 +266,9 @@ static NSString* IJSVGStyleSheetResolvedVariableProperty(NSString* property, NSS
     for (NSString* property in _variableSources) {
         NSString* source = _variableSources[property];
         NSString* value = IJSVGStyleSheetResolvedVariableProperty(property, source, _dict[property], properties, &shorthands);
-        value = IJSVGCSSResolvedPaintValue(value, IJSVGNodeAttributeForName(property));
+        if (IJSVGCSSWideKeywordFromString(value) != IJSVGCSSWideKeywordRevertLayer) {
+            value = IJSVGCSSResolvedPaintValue(value, IJSVGNodeAttributeForName(property));
+        }
         BOOL invalid = value.length == 0;
         [result storeResolvedValue:invalid ? @"" : value forProperty:property important:[self isPropertyImportant:property] variableSource:nil];
         if (invalid) {
@@ -234,7 +283,7 @@ static NSString* IJSVGStyleSheetResolvedVariableProperty(NSString* property, NSS
 
 - (BOOL)hasImportantProperties
 {
-    return _importantProperties.count != 0;
+    return _importantProperties.count != 0 || _normalInlineRollbacks.count != 0;
 }
 
 - (BOOL)isPropertyImportant:(NSString*)key

@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestSupport.h"
+#import <IJSVGTestSupport.h>
 
 extern NSString* IJSVGFilterShaderSource(NSString* name);
 

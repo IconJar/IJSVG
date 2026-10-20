@@ -28,7 +28,7 @@ static BOOL IJSVGGradientAttributeDependsOnStyle(IJSVGXMLAttribute* attribute)
     for (NSUInteger index = 0; index < length; index++) {
 
         // Escapes and comments can conceal CSS keywords from this byte scan.
-        // Keep them, and non-ASCII values, on the general parsing path.
+        // Keep them, and values outside ASCII, on the general parsing path.
         if (bytes[index] >= 0x80 || bytes[index] == '\\' || bytes[index] == '/') {
             return YES;
         }
@@ -88,7 +88,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
             [stop consumeXMLAttributes:IJSVGXMLAttributes(child) parser:parser];
         } else {
             // Resolve the three declarations before consuming them so inline
-            // opacity also applies to a presentation-attribute colour.
+            // opacity also applies to a colour from a presentation attribute.
             NSString* offset = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(child, IJSVGNodeAttributeOffset));
             NSString* color = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(child, IJSVGNodeAttributeStopColor));
             NSString* opacity = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(child, IJSVGNodeAttributeStopOpacity));

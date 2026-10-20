@@ -2,9 +2,12 @@
 //  IJSVGByteCache.m
 //  IJSVG
 //
+//  Created by Curtis Hard on 15/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
 
-#include "IJSVGByteCache.h"
-#include "IJSVGByteHash.h"
+#include <IJSVGByteCache.h>
+#include <IJSVGByteHash.h>
 #include <stdlib.h>
 #include <string.h>
 

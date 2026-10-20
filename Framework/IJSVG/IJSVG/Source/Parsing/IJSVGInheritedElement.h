@@ -6,8 +6,8 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <Foundation/Foundation.h>
+#import <IJSVGXML.h>
 
 @interface IJSVGInheritedElement : NSObject
 @property (nonatomic, readonly) IJSVGXMLNode* element;

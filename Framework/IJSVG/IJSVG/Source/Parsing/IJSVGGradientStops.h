@@ -6,8 +6,8 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGGradient.h>
+#import <IJSVGXML.h>
 
 @class IJSVGParser;
 

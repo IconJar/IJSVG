@@ -624,7 +624,7 @@ static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* h
             return [[NSString alloc] initWithBytes:bytes length:length encoding:NSASCIIStringEncoding];
         }
 
-        // Preserve the existing formatting for extended-range color components.
+        // Preserve the existing formatting for extended range color components.
         // we need to make sure the last 2 chars
         // are the same or we cant enable shorthand
         if (allowRRGGBBAA == YES) {

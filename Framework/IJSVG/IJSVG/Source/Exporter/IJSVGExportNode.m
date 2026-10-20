@@ -172,7 +172,7 @@
         xmlNodeSetContent(_node, NULL);
 
         // xmlNodeSetContent interprets entity references on elements/attributes.
-        // A text node accepts literal text; libxml escapes it during output.
+        // A text node accepts literal text. libxml escapes it during output.
         if (value.length != 0) {
             if (self.kind == IJSVGXMLNodeKindElement) {
                 IJSVGExportNode* child = [[IJSVGExportNode alloc] initWithKind:IJSVGXMLNodeKindText];
@@ -246,7 +246,7 @@
         return;
     }
 
-    // Removing the owner's reference must not destroy self mid-operation.
+    // Removing the reference held by the owner must not destroy self during the operation.
     __attribute__((objc_precise_lifetime)) IJSVGExportNode* retainedSelf = self;
     IJSVGExportElement* parent = (IJSVGExportElement*)self.parent;
     IJSVGExportNode* previous = IJSVGExportWrapper(_node->prev);

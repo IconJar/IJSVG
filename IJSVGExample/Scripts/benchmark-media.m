@@ -1,3 +1,11 @@
+//
+//  benchmark media.m
+//  IJSVGExample
+//
+//  Created by Curtis Hard on 16/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGRootNode.h>

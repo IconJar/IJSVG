@@ -18,6 +18,14 @@ IJSVGCSSWideKeyword IJSVGCSSWideKeywordFromString(NSString* value)
     if (source.bytes == NULL) {
         return IJSVGCSSWideKeywordUnknown;
     }
+    if (memchr(source.bytes, '\\', source.length) != NULL) {
+        NSUInteger cursor = 0;
+        NSString* identifier = IJSVGStyleSheetConsumeIdentifier(source.bytes, source.length, &cursor);
+        if (identifier == nil || cursor != source.length || [identifier rangeOfString:@"\\"].location != NSNotFound) {
+            return IJSVGCSSWideKeywordUnknown;
+        }
+        return IJSVGCSSWideKeywordFromString(identifier);
+    }
     switch (source.length) {
         case 5: {
             if (IJSVGCharBufferCaseInsensitiveCompare(source.bytes, "unset")) {

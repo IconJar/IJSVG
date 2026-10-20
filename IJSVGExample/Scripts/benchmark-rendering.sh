@@ -1,4 +1,12 @@
 #!/bin/sh
+#
+#  benchmark rendering.sh
+#  IJSVGExample
+#
+#  Created by Curtis Hard on 15/10/2026.
+#  Copyright © 2026 Curtis Hard. All rights reserved.
+#
+
 # Build a Release package and measure parsing, first render, and cached redraws.
 set -eu
 script_directory="$(cd "$(dirname "$0")" && pwd)"

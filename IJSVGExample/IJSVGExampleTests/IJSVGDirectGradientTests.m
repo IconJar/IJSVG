@@ -6,10 +6,10 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVGRootPaint.h>
 #import <IJSVGShapePaint.h>
+#import <IJSVGTestHelpers.h>
 
 @interface IJSVGDirectGradientTests : XCTestCase
 @end

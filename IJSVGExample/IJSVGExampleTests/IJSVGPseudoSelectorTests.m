@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "../Scripts/selector-stress-document.h"
+#import <../Scripts/selector-stress-document.h>
 #import <IJSVGTestHelpers.h>
 #import <WebKit/WebKit.h>
 

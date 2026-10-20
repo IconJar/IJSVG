@@ -1,3 +1,11 @@
+//
+//  PlatformTests.swift
+//  IJSVG
+//
+//  Created by Curtis Hard on 16/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 import CoreGraphics
 import Foundation
 import IJSVG

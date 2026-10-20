@@ -1,3 +1,11 @@
+//
+//  IJSVGFilterVectorTests.m
+//  IJSVGExampleTests
+//
+//  Created by Curtis Hard on 15/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVGComponentTransferFilterEffect.h>
 #import <IJSVGConvolveMatrixFilterEffect.h>
@@ -6,8 +14,8 @@
 #import <Metal/Metal.h>
 #import <XCTest/XCTest.h>
 
-// Supply exact floating-point pixels without rasterization or colour conversion
-// obscuring the CPU kernels' numerical results.
+// Supply exact floating point pixels without rasterization or colour conversion
+// obscuring numerical results from the CPU kernels.
 @interface IJSVGVectorTestContext : IJSVGFilterContext
 @property (nonatomic) NSData* source;
 @property (nonatomic) NSMutableData* output;

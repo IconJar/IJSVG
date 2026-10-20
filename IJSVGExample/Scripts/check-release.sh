@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  check-release.sh
+#  check release.sh
 #  IJSVGExample
 #
 #  Created by Curtis Hard on 12/10/2026.

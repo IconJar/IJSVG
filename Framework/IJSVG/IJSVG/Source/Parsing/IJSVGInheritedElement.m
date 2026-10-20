@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGInheritedElement.h"
+#import <IJSVGInheritedElement.h>
 #include <string.h>
 
 @implementation IJSVGInheritedElement

@@ -6,8 +6,8 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGParsedPathCache.h"
-#import "IJSVGByteCache.h"
+#import <IJSVGByteCache.h>
+#import <IJSVGParsedPathCache.h>
 #import <objc/runtime.h>
 
 static const NSUInteger IJSVGParsedPathCostLimit = 12 * 1024 * 1024;

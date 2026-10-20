@@ -1,7 +1,15 @@
-#import "selector-stress-document.h"
+//
+//  benchmark selectors.m
+//  IJSVGExample
+//
+//  Created by Curtis Hard on 15/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGRootNode.h>
+#import <selector-stress-document.h>
 
 // Measures XML parsing, selector matching, cascade, and render node creation.
 // Keep the generated input and checksum identical when comparing revisions.

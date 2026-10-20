@@ -2,6 +2,9 @@
 //  IJSVGByteCache.h
 //  IJSVG
 //
+//  Created by Curtis Hard on 15/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
 
 #ifndef IJSVGByteCache_h
 #define IJSVGByteCache_h

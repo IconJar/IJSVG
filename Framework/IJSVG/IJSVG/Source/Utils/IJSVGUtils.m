@@ -294,7 +294,7 @@ NSString* IJSVGShortFloatString(CGFloat f)
     char buffer[64];
     int length = snprintf(buffer, sizeof(buffer), "%g", f);
 
-    // Keep the Foundation fallback for errors or a non-C numeric locale.
+    // Keep the Foundation fallback for errors or a numeric locale other than C.
     if (length < 0 || length >= sizeof(buffer) || strchr(buffer, ',') != NULL) {
         return IJSVGShortenFloatString([NSString stringWithFormat:@"%g", f]);
     }
@@ -353,7 +353,7 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
 NSString* IJSVGPointToCommandString(CGPoint point)
 {
     // Format both coordinates in one buffer, avoiding two temporary NSStrings
-    // and Foundation's object-formatting machinery for every polygon vertex.
+    // and the object formatting machinery in Foundation for every polygon vertex.
     char buffer[128];
     int length = snprintf(buffer, sizeof(buffer), "%g %g", point.x, point.y);
     if (length < 0 || length >= sizeof(buffer) || strchr(buffer, ',') != NULL) {

@@ -6,10 +6,10 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGStyleNode.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGStyleSheetUtils.h>
+#import <IJSVGXML.h>
 
 @implementation IJSVGStyleNode
 

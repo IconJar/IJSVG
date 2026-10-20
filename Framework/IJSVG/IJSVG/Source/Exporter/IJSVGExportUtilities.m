@@ -194,7 +194,7 @@ NSArray<NSArray<IJSVGExportElement*>*>* IJSVGExportDuplicatePaths(IJSVGExportDoc
     IJSVGExportCheckAllocation(table);
     NSUInteger count = 0;
 
-    // Keys borrow the XML buffers only during this read-only traversal.
+    // Keys borrow the XML buffers only during this read only traversal.
     for (IJSVGExportElement* path in paths) {
         xmlAttrPtr attribute = xmlHasProp(path->_node, BAD_CAST "d");
         if (attribute == NULL) {
@@ -360,7 +360,7 @@ static BOOL IJSVGExportEqualNodes(xmlNodePtr left, xmlNodePtr right)
 
 NSUInteger IJSVGExportChildrenHash(IJSVGExportElement* element)
 {
-    // Namespace differences can collide; equality resolves them before sharing.
+    // Namespace differences can collide. Equality resolves them before sharing.
     return IJSVGExportHashNodes(14695981039346656037ULL, element->_node->children);
 }
 
@@ -405,7 +405,7 @@ static void IJSVGExportRemoveDefaults(xmlNodePtr node, xmlNodePtr root, IJSVGExp
     }
 
     // Presence, not the inherited value, controls this cleanup rule. Remember
-    // the first owning ancestor and restore it without per-element dictionaries.
+    // the first owning ancestor and restore it without a dictionary for each element.
     for (NSUInteger index = 0; index < count; index++) {
         if (rules[index].inheritedFrom == node) {
             rules[index].inheritedFrom = NULL;
@@ -497,8 +497,8 @@ NSDictionary<NSString*, NSString*>* IJSVGExportSharedAttributes(IJSVGExportEleme
     NSUInteger position = parent->_childCount;
     NSUInteger bestCount = 0;
 
-    // One running length per inheritable name replaces per-child dictionaries
-    // and boxed run ends. Reverse traversal also makes earliest-run ties cheap.
+    // One running length per inheritable name replaces a dictionary for each child
+    // and boxed run ends. Reverse traversal also makes ties involving the earliest run cheap.
     for (xmlNodePtr node = parent->_node->last; node != NULL; node = node->prev) {
         position--;
         NSUInteger longest = 0;

@@ -2,6 +2,9 @@
 //  IJSVGByteHash.h
 //  IJSVG
 //
+//  Created by Curtis Hard on 15/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
 
 #ifndef IJSVGByteHash_h
 #define IJSVGByteHash_h

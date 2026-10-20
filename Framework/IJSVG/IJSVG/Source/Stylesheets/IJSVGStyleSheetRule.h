@@ -18,6 +18,9 @@
 @property (nonatomic, strong) NSArray<IJSVGStyleSheetSelector*>* selectors;
 @property (nonatomic, strong) IJSVGStyleSheetStyle* style;
 @property (nonatomic, assign) NSUInteger sourceIndex;
+
+// Resolved layer precedence. NSUIntegerMax represents unlayered rules.
+@property (nonatomic, assign) NSUInteger layerOrder;
 @property (nonatomic, assign) BOOL matchesUniversalSelector;
 
 @property (nonatomic, strong) NSMutableSet<NSString*>* matchingIdentifiers;

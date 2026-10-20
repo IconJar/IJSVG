@@ -1,4 +1,12 @@
 #!/bin/sh
+#
+#  benchmark regions.sh
+#  IJSVGExample
+#
+#  Created by Curtis Hard on 15/10/2026.
+#  Copyright © 2026 Curtis Hard. All rights reserved.
+#
+
 # Measure region queries on large generated SVG documents.
 set -eu
 script_directory="$(cd "$(dirname "$0")" && pwd)"

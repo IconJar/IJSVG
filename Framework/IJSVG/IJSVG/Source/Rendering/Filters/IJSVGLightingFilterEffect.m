@@ -104,8 +104,8 @@ static inline simd_double2 IJSVGLightingAlphaPair(const float* pixels)
     return (simd_double2) { pixels[3], pixels[7] };
 }
 
-// Unit-spaced interior samples are exact pixel reads. Calculate two Sobel
-// normals together; borders and fractional spacing keep the general sampler.
+// Unit spaced interior samples are exact pixel reads. Calculate two Sobel
+// normals together. Borders and fractional spacing keep the general sampler.
 static void IJSVGLightingInteriorNormals(const float* src, NSInteger w, NSInteger x, NSInteger y,
     IJSVGLightingParameters parameters, IJSVGLightingVector normals[2])
 {
@@ -125,7 +125,7 @@ static void IJSVGLightingInteriorNormals(const float* src, NSInteger w, NSIntege
     simd_double2 nx = -parameters.surfaceScale * gx / (4 * parameters.step.width);
     simd_double2 ny = -parameters.surfaceScale * gy / (4 * parameters.step.height);
 
-    // Preserve hypot's overflow handling and the scalar path's rounding.
+    // Preserve overflow handling in hypot and rounding in the scalar path.
     for (NSUInteger lane = 0; lane < 2; lane++) {
         double norm = hypot(hypot(nx[lane], ny[lane]), 1);
         normals[lane] = (IJSVGLightingVector) { nx[lane] / norm, ny[lane] / norm, 1 / norm };

@@ -1189,7 +1189,7 @@ static BOOL IJSVGStyleSheetParseFont(char* chars, NSUInteger length, NSRange* ra
         length--;
     }
     NSRange whole = NSMakeRange(index, length - index);
-    if (IJSVGStyleSheetTokenEquals(chars, whole, "inherit") || IJSVGStyleSheetTokenEquals(chars, whole, "unset") || IJSVGStyleSheetTokenEquals(chars, whole, "initial")) {
+    if (IJSVGStyleSheetTokenEquals(chars, whole, "inherit") || IJSVGStyleSheetTokenEquals(chars, whole, "unset") || IJSVGStyleSheetTokenEquals(chars, whole, "initial") || IJSVGStyleSheetTokenEquals(chars, whole, "revert-layer")) {
         for (NSUInteger property = 0; property < IJSVGStyleSheetFontPropertyCount; property++) {
             ranges[property] = whole;
         }

@@ -6,7 +6,6 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGCircle.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGEllipse.h>
@@ -20,6 +19,7 @@
 #import <IJSVGCSSMathExpression.h>
 #import <IJSVGCSSParser.h>
 #import <IJSVGParserUtils.h>
+#import <IJSVGXML.h>
 #import <string.h>
 
 uint64_t IJSVGTextStyleBit(NSUInteger attribute)
@@ -739,7 +739,7 @@ static uint64_t IJSVGStorePrioritizedStyleAttributes(IJSVGStyleSheetStyle* style
         if (entry.attribute >= allowedCount || allowed[entry.attribute] != 1) {
             continue;
         }
-        if (!entry.important && [fallback isPropertyImportant:entry.name]) {
+        if (!entry.important && [fallback suppressesNormalInlineProperty:entry.name]) {
             continue;
         }
         if (entry.invalidAtComputedValue) {
@@ -760,7 +760,7 @@ void IJSVGStoreStyleAttributes(IJSVGStyleSheetStyle* style, IJSVGBitFlags* activ
 uint64_t IJSVGStoreCascadedStyleAttributes(IJSVGStyleSheetStyle* style, IJSVGStyleSheetStyle* inlineStyle, IJSVGBitFlags* activeAttributes, NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
 {
     uint64_t textAttributes = IJSVGStorePrioritizedStyleAttributes(style, nil, activeAttributes, attributeValues);
-    return textAttributes | IJSVGStorePrioritizedStyleAttributes(inlineStyle, style, activeAttributes, attributeValues);
+    return textAttributes | IJSVGStorePrioritizedStyleAttributes([inlineStyle styleByRemovingLayerReverts], style, activeAttributes, attributeValues);
 }
 
 typedef NS_ENUM(NSUInteger, IJSVGOriginKeyword) {

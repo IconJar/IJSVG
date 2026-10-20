@@ -1,3 +1,11 @@
+//
+//  benchmark regions.m
+//  IJSVGExample
+//
+//  Created by Curtis Hard on 20/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVG.h>
 #import <mach/mach_time.h>

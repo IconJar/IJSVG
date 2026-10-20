@@ -882,9 +882,17 @@
                       "font-size='12'/></g>"
          rendersLike:@"<circle r='4' cx='16' cy='16'/>"];
     [self assertBody:@"<g style='r:8px;cx:16px;cy:16px'><circle/></g>" rendersLike:@""];
-    for (NSString* keyword in @[ @"initial", @"unset", @"revert", @"revert-layer" ]) {
+    for (NSString* keyword in @[ @"initial", @"unset", @"revert" ]) {
         [self assertBody:[NSString stringWithFormat:@"<circle r='8' cx='16' cy='16' style='r:%@'/>", keyword] rendersLike:@""];
     }
+
+    // Layer rollback preserves presentation attributes, unlike origin rollback.
+    [self assertBody:@"<circle r='8' cx='16' cy='16' style='r:revert-layer'/>"
+         rendersLike:@"<circle r='8' cx='16' cy='16'/>"];
+    [self assertBody:@"<circle cx='16' cy='16' style='r:revert-layer'/>" rendersLike:@""];
+    [self assertBody:@"<style>@layer base { circle { r:4px } }</style>"
+                      "<circle r='8' cx='16' cy='16' style='r:revert-layer'/>"
+         rendersLike:@"<circle r='4' cx='16' cy='16'/>"];
     [self assertBody:@"<rect x='3' y='4' width='20' height='20' rx='8' ry='4' "
                      @"style='rx:auto'/>"
          rendersLike:@"<rect x='3' y='4' width='20' height='20' rx='4' ry='4'/>"];

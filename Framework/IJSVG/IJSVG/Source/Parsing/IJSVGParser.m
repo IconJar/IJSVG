@@ -1341,8 +1341,6 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
             nodeStyle = [self parsedInlineStyleForValue:value];
         }
 
-        textAttributes |= IJSVGStoreCascadedStyleAttributes(styleSheet, nodeStyle, activeAttributes, attributeValues);
-
         if (cacheFilterAttributes) {
             IJSVGParserCacheFilterAttributes(raw, attributeValues, styleSheet, nodeStyle, styleRuleCount);
         }
@@ -1354,8 +1352,9 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     if (resolvedVariables) {
         styleSheet = resolvedStyle;
         nodeStyle = resolvedInline;
-        textAttributes |= IJSVGStoreCascadedStyleAttributes(styleSheet, nodeStyle, activeAttributes, attributeValues);
     }
+    nodeStyle = [nodeStyle styleByRemovingLayerReverts];
+    textAttributes |= IJSVGStoreCascadedStyleAttributes(styleSheet, nodeStyle, activeAttributes, attributeValues);
     __attribute__((objc_precise_lifetime)) NSMutableArray<NSString*>* resolvedAttributeValues = nil;
     if (variableAttributeCount != 0) {
         resolvedAttributeValues = [[NSMutableArray alloc] initWithCapacity:variableAttributeCount];
@@ -2177,7 +2176,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
 - (void)populateGradient:(IJSVGGradient*)gradient fromElement:(IJSVGXMLNode*)element
 {
-    // Unrelated rules (for example Matplotlib's universal stroke rules) do
+    // Unrelated rules (for example the universal stroke rules from Matplotlib) do
     // not require a cascade for plain stops. Keep dependent values and all
     // rules that can affect a stop on the general path.
     BOOL plainStops = ![self hasGradientStopStyles];
@@ -2426,10 +2425,14 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
             if (![property hasPrefix:@"--"]) {
                 continue;
             }
-            if (source == inlineStyle && [style isPropertyImportant:property] && ![inlineStyle isPropertyImportant:property]) {
+            if (source == inlineStyle && [style suppressesNormalInlineProperty:property] && ![inlineStyle isPropertyImportant:property]) {
                 continue;
             }
-            declarations[property] = [source property:property];
+            NSString* declaration = [source property:property];
+            if (source == inlineStyle && IJSVGCSSWideKeywordFromString(declaration) == IJSVGCSSWideKeywordRevertLayer) {
+                continue;
+            }
+            declarations[property] = declaration;
         }
     }
     NSDictionary<NSString*, id>* result = IJSVGCSSResolveCustomProperties(declarations, inherited);

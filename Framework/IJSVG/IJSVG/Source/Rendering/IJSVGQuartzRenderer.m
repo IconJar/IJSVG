@@ -6,7 +6,6 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGByteCache.h"
 #import <IJSVG/IJSVGAnchor.h>
 #import <IJSVG/IJSVGCircle.h>
 #import <IJSVG/IJSVGEllipse.h>
@@ -24,6 +23,7 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUse.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGByteCache.h>
 #import <IJSVGColorMatrixFilterEffect.h>
 #import <IJSVGFilterGraph.h>
 #import <IJSVGFilterPaint.h>

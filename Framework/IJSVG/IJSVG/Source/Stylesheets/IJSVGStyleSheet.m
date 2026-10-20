@@ -10,38 +10,224 @@
 #import <IJSVG/IJSVGStyleSheet.h>
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVGByteCache.h>
+#import <IJSVGCSSParser.h>
 #import <IJSVGStyleSheetUtils.h>
 
-@interface IJSVGStyleSheetWinner : NSObject {
-@public
-    IJSVGStyleSheetRule* rule;
-    NSUInteger specificity;
-    BOOL important;
-}
+@interface IJSVGStyleSheetLayer : NSObject
+@property (nonatomic) NSUInteger depth;
+@property (nonatomic, strong) NSMutableArray<IJSVGStyleSheetLayer*>* children;
+@property (nonatomic, strong) NSMutableDictionary<NSString*, IJSVGStyleSheetLayer*>* namedChildren;
+@property (nonatomic, strong) NSMutableArray<IJSVGStyleSheetRule*>* rules;
+- (NSUInteger)assignOrderStartingAt:(NSUInteger)order;
 @end
 
-@implementation IJSVGStyleSheetWinner
-@end
+@implementation IJSVGStyleSheetLayer
 
-static void IJSVGStyleSheetUpdateWinners(NSMutableDictionary<NSString*, IJSVGStyleSheetWinner*>* winners, IJSVGStyleSheetRule* rule, NSUInteger specificity)
+- (instancetype)init
 {
-    for (NSString* property in rule.style.properties) {
-        BOOL important = [rule.style isPropertyImportant:property];
-        IJSVGStyleSheetWinner* winner = winners[property];
-        if (winner == nil) {
-            winner = [[IJSVGStyleSheetWinner alloc] init];
-            winners[property] = winner;
-        } else if (important != winner->important) {
-            if (!important) {
+    if ((self = [super init]) != nil) {
+        _children = [[NSMutableArray alloc] init];
+        _namedChildren = [[NSMutableDictionary alloc] init];
+        _rules = [[NSMutableArray alloc] init];
+    }
+    return self;
+}
+
+- (NSUInteger)assignOrderStartingAt:(NSUInteger)order
+{
+    // Direct declarations form the final, implicit sublayer of each parent.
+    for (IJSVGStyleSheetLayer* child in _children) {
+        order = [child assignOrderStartingAt:order];
+    }
+    for (IJSVGStyleSheetRule* rule in _rules) {
+        rule.layerOrder = order;
+    }
+    return order + 1;
+}
+
+@end
+
+// Parse the entire prelude before registering any names: an invalid list must
+// not reserve an order for its otherwise valid entries. An empty block name
+// denotes a fresh anonymous layer. A statement must contain at least one name.
+static NSArray<NSArray<NSString*>*>* IJSVGStyleSheetLayerNames(const char* bytes, NSUInteger length, BOOL statement)
+{
+    NSUInteger cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, 0, length);
+    if (cursor == length || bytes[cursor++] != '@') {
+        return nil;
+    }
+    char keyword[16] = { 0 };
+    if (!IJSVGStyleSheetConsumeASCIIIdentifier(bytes, length, &cursor, keyword, sizeof(keyword)) || strcasecmp(keyword, "layer") != 0) {
+        return nil;
+    }
+    cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor, length);
+    if (cursor == length) {
+        return statement ? nil : @[];
+    }
+    NSMutableArray* names = [[NSMutableArray alloc] init];
+    while (cursor < length) {
+        NSMutableArray* components = [[NSMutableArray alloc] init];
+        while (YES) {
+            NSString* name = IJSVGStyleSheetConsumeIdentifier(bytes, length, &cursor);
+            NSString* folded = name.lowercaseString;
+            if (name == nil || [folded isEqualToString:@"initial"] || [folded isEqualToString:@"inherit"]
+                || [folded isEqualToString:@"unset"] || [folded isEqualToString:@"revert"]
+                || [folded isEqualToString:@"revert-layer"] || components.count == 64) {
+                return nil;
+            }
+            [components addObject:name];
+            if (cursor == length || bytes[cursor] != '.') {
+                break;
+            }
+            cursor++;
+        }
+        [names addObject:components];
+        cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor, length);
+        if (cursor == length) {
+            return names;
+        }
+        if (!statement || bytes[cursor++] != ',') {
+            return nil;
+        }
+        cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor, length);
+        if (cursor == length) {
+            return nil;
+        }
+    }
+    return nil;
+}
+
+// Entries borrow strings and styles from the stylesheet. Only deferred variable
+// resolution retains an owner array and a snapshot of this buffer.
+typedef struct {
+    __unsafe_unretained NSString* property;
+    __unsafe_unretained IJSVGStyleSheetStyle* style;
+    NSUInteger specificity;
+    NSUInteger layerOrder;
+    NSUInteger sourceIndex;
+    BOOL important;
+} IJSVGStyleSheetDeclaration;
+
+typedef struct {
+    IJSVGStyleSheetDeclaration* entries;
+    IJSVGStyleSheetDeclaration* inlineEntries;
+    NSUInteger count;
+    NSUInteger capacity;
+    BOOL deferred;
+} IJSVGStyleSheetDeclarations;
+
+static void IJSVGStyleSheetAppendDeclarations(IJSVGStyleSheetDeclarations* buffer, IJSVGStyleSheetRule* rule, NSUInteger specificity)
+{
+    IJSVGStyleSheetStyle* style = rule.style;
+    NSDictionary<NSString*, NSString*>* properties = style.properties;
+    NSUInteger maximum = SIZE_MAX / sizeof(*buffer->entries);
+    if (properties.count > maximum - buffer->count) {
+        [NSException raise:NSMallocException format:@"Too many CSS declarations"];
+    }
+    NSUInteger required = buffer->count + properties.count;
+    if (required > buffer->capacity) {
+        NSUInteger capacity = MAX(required, buffer->capacity > maximum / 2 ? maximum : buffer->capacity * 2);
+        BOOL inlineStorage = buffer->entries == buffer->inlineEntries;
+        IJSVGStyleSheetDeclaration* entries = inlineStorage ? malloc(capacity * sizeof(*entries)) : realloc(buffer->entries, capacity * sizeof(*entries));
+        if (entries == NULL) {
+            [NSException raise:NSMallocException format:@"Unable to allocate CSS declarations"];
+        }
+        if (inlineStorage) {
+            memcpy(entries, buffer->entries, buffer->count * sizeof(*entries));
+        }
+        buffer->entries = entries;
+        buffer->capacity = capacity;
+    }
+    NSUInteger layerOrder = rule.layerOrder;
+    NSUInteger sourceIndex = rule.sourceIndex;
+    buffer->deferred |= style.hasVariableProperties;
+    for (NSString* property in properties) {
+        buffer->entries[buffer->count++] = (IJSVGStyleSheetDeclaration) { property, style, specificity, layerOrder, sourceIndex, [style isPropertyImportant:property] };
+    }
+}
+
+static int IJSVGStyleSheetCompareDeclarations(const void* left, const void* right)
+{
+    const IJSVGStyleSheetDeclaration* a = left;
+    const IJSVGStyleSheetDeclaration* b = right;
+    if (a->property != b->property) {
+        CFComparisonResult order = CFStringCompare((__bridge CFStringRef)a->property, (__bridge CFStringRef)b->property, 0);
+        if (order != kCFCompareEqualTo) {
+            return order < 0 ? -1 : 1;
+        }
+    }
+    if (a->important != b->important) {
+        return a->important ? -1 : 1;
+    }
+    if (a->layerOrder != b->layerOrder) {
+        return (a->layerOrder < b->layerOrder) == a->important ? -1 : 1;
+    }
+    if (a->specificity != b->specificity) {
+        return a->specificity > b->specificity ? -1 : 1;
+    }
+    return a->sourceIndex == b->sourceIndex ? 0 : (a->sourceIndex > b->sourceIndex ? -1 : 1);
+}
+
+// The contiguous range for each property is ordered by cascade precedence. Rollback
+// excludes the interval between the normal and important declarations of a layer.
+static IJSVGStyleSheetStyle* IJSVGStyleSheetResolveDeclarations(const IJSVGStyleSheetDeclaration* entries, NSUInteger count, NSDictionary<NSString*, id>* variables, NSArray<IJSVGStyleSheetStyle*>* owners)
+{
+    IJSVGStyleSheetStyle* result = [[IJSVGStyleSheetStyle alloc] init];
+    NSMapTable<IJSVGStyleSheetStyle*, IJSVGStyleSheetStyle*>* resolved = owners != nil ? [NSMapTable strongToStrongObjectsMapTable] : nil;
+    NSUInteger index = 0;
+    while (index < count) {
+        NSString* property = entries[index].property;
+        NSUInteger end = index + 1;
+        while (end < count && (entries[end].property == property || [entries[end].property isEqualToString:property])) {
+            end++;
+        }
+        BOOL limited = NO;
+        NSUInteger limit = NSUIntegerMax;
+        for (NSUInteger candidate = index; candidate < end; candidate++) {
+            const IJSVGStyleSheetDeclaration* entry = entries + candidate;
+            if (limited && entry->layerOrder >= limit) {
                 continue;
             }
-        } else if (specificity < winner->specificity || (specificity == winner->specificity && rule.sourceIndex < winner->rule.sourceIndex)) {
-            continue;
+            IJSVGStyleSheetStyle* source = entry->style;
+            if (resolved != nil) {
+                IJSVGStyleSheetStyle* cached = [resolved objectForKey:source];
+                if (cached == nil) {
+                    cached = [source styleByResolvingVariables:variables];
+                    [resolved setObject:cached forKey:source];
+                }
+                source = cached;
+            }
+            if (IJSVGCSSWideKeywordFromString([source property:property]) != IJSVGCSSWideKeywordRevertLayer) {
+                [result copyProperty:property fromStyle:source];
+                break;
+            }
+            limited = YES;
+            limit = entry->layerOrder;
+            if (entry->important) {
+                [result suppressNormalInlineProperty:property];
+            }
         }
-        winner->rule = rule;
-        winner->specificity = specificity;
-        winner->important = important;
+        index = end;
     }
+    return result;
+}
+
+static IJSVGStyleSheetStyle* IJSVGStyleSheetResolveBuffer(IJSVGStyleSheetDeclarations* buffer)
+{
+    qsort(buffer->entries, buffer->count, sizeof(*buffer->entries), IJSVGStyleSheetCompareDeclarations);
+    IJSVGStyleSheetStyle* result = IJSVGStyleSheetResolveDeclarations(buffer->entries, buffer->count, nil, nil);
+    if (buffer->deferred) {
+        // The block may outlive both the stack buffer and its stylesheet.
+        NSData* storage = [NSData dataWithBytes:buffer->entries length:buffer->count * sizeof(*buffer->entries)];
+        NSMutableArray<IJSVGStyleSheetStyle*>* owners = [[NSMutableArray alloc] init];
+        for (NSUInteger index = 0; index < buffer->count; index++) {
+            [owners addObject:buffer->entries[index].style];
+        }
+        result.layerResolver = ^IJSVGStyleSheetStyle*(NSDictionary<NSString*, id>* variables) {
+            return IJSVGStyleSheetResolveDeclarations(storage.bytes, storage.length / sizeof(IJSVGStyleSheetDeclaration), variables, owners);
+        };
+    }
+    return result;
 }
 
 static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableIndexSet*>* index, NSSet<NSString*>* names, NSUInteger ruleIndex)
@@ -127,6 +313,53 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
     NSMutableDictionary<NSString*, NSMutableIndexSet*>* _classRules;
     NSMutableDictionary<NSString*, NSMutableIndexSet*>* _tagRules;
     NSMutableIndexSet* _universalRules;
+    IJSVGStyleSheetLayer* _layerRoot;
+    IJSVGStyleSheetLayer* _currentLayer;
+    BOOL _layerOrderDirty;
+    BOOL _hasCascadeDependentRules;
+}
+
+- (IJSVGStyleSheetLayer*)registerLayerWithName:(NSArray<NSString*>*)components
+{
+    if (_currentLayer.depth + MAX(components.count, 1UL) > 64) {
+        return nil;
+    }
+    if (_layerRoot == nil) {
+        _layerRoot = [[IJSVGStyleSheetLayer alloc] init];
+    }
+    IJSVGStyleSheetLayer* parent = _currentLayer ?: _layerRoot;
+    if (components.count == 0) {
+        IJSVGStyleSheetLayer* anonymous = [[IJSVGStyleSheetLayer alloc] init];
+        anonymous.depth = parent.depth + 1;
+        [parent.children addObject:anonymous];
+        _layerOrderDirty = YES;
+        return anonymous;
+    }
+    for (NSString* name in components) {
+        IJSVGStyleSheetLayer* child = parent.namedChildren[name];
+        if (child == nil) {
+            child = [[IJSVGStyleSheetLayer alloc] init];
+            child.depth = parent.depth + 1;
+            parent.namedChildren[name] = child;
+            [parent.children addObject:child];
+            _layerOrderDirty = YES;
+        }
+        parent = child;
+    }
+    return parent;
+}
+
+- (void)parseLayerStatement:(const char*)bytes length:(NSUInteger)length
+{
+    NSArray<NSArray<NSString*>*>* names = IJSVGStyleSheetLayerNames(bytes, length, YES);
+    for (NSArray* components in names) {
+        if (_currentLayer.depth + components.count > 64) {
+            return;
+        }
+    }
+    for (NSArray* components in names) {
+        [self registerLayerWithName:components];
+    }
 }
 
 - (BOOL)mayAffectAttributes:(IJSVGBitFlags*)attributes
@@ -206,6 +439,12 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
     IJSVGByteCache* mediaMatches = NULL;
     [self parseStyleBytes:chars length:length namespaces:namespaces environment:environment mediaMatches:&mediaMatches nesting:0];
     IJSVGByteCacheDestroy(mediaMatches);
+
+    // Resolve priorities before exposing the stylesheet to node matching.
+    if (_layerOrderDirty) {
+        [_layerRoot assignOrderStartingAt:0];
+        _layerOrderDirty = NO;
+    }
 }
 
 - (void)parseStyleBytes:(const char*)chars length:(NSUInteger)length namespaces:(NSMutableDictionary*)namespaces environment:(IJSVGMediaEnvironment)environment mediaMatches:(IJSVGByteCache**)mediaMatches nesting:(NSUInteger)nesting
@@ -226,7 +465,7 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
 
     for (NSUInteger i = 0; i < length; i++) {
         if (quote == 0 && !escaped) {
-            i += strcspn(chars + i, ";{}()'\"\\");
+            i += strcspn(chars + i, ";{}()[]'\"\\");
             if (i >= length) {
                 break;
             }
@@ -238,6 +477,7 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
         }
 
         if (c == ';' && depth == 0 && parenDepth == 0) {
+            [self parseLayerStatement:chars + marker length:i - marker];
             if (allowsNamespaces) {
                 IJSVGStyleSheetParseNamespace(IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i), namespaces);
             }
@@ -245,12 +485,12 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
             continue;
         }
 
-        if (c == '(') {
+        if (c == '(' || c == '[') {
             parenDepth += 1;
             continue;
         }
 
-        if (c == ')' && parenDepth != 0) {
+        if ((c == ')' || c == ']') && parenDepth != 0) {
             parenDepth -= 1;
             continue;
         }
@@ -311,7 +551,16 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
 - (void)parseRuleBody:(const char*)chars length:(NSUInteger)length prelude:(const char*)prelude preludeLength:(NSUInteger)preludeLength namespaces:(NSMutableDictionary*)namespaces environment:(IJSVGMediaEnvironment)environment mediaMatches:(IJSVGByteCache**)mediaMatches nesting:(NSUInteger)nesting
 {
     if (preludeLength != 0 && prelude[0] == '@') {
-        if ([self mediaRuleMatches:prelude length:preludeLength environment:environment cache:mediaMatches]) {
+        NSArray* layerNames = IJSVGStyleSheetLayerNames(prelude, preludeLength, NO);
+        if (layerNames != nil) {
+            IJSVGStyleSheetLayer* previous = _currentLayer;
+            IJSVGStyleSheetLayer* layer = [self registerLayerWithName:layerNames.firstObject ?: @[]];
+            if (layer != nil) {
+                _currentLayer = layer;
+                [self parseStyleBytes:chars length:length namespaces:namespaces environment:environment mediaMatches:mediaMatches nesting:nesting + 1];
+                _currentLayer = previous;
+            }
+        } else if ([self mediaRuleMatches:prelude length:preludeLength environment:environment cache:mediaMatches]) {
             [self parseStyleBytes:chars length:length namespaces:namespaces environment:environment mediaMatches:mediaMatches nesting:nesting + 1];
         }
         return;
@@ -322,8 +571,116 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
     if (length == 0 || selectors.count == 0) {
         return;
     }
-    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleBytes:chars length:length];
-    [self addParsedStyle:style withSelectors:selectors];
+    [self parseNestedStyleBytes:chars length:length selectors:selectors namespaces:namespaces environment:environment mediaMatches:mediaMatches nesting:nesting];
+}
+
+- (void)addDeclarationBytes:(const char*)bytes length:(NSUInteger)length selectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors
+{
+    if (IJSVGStyleSheetIndexBySkippingWhitespace(bytes, 0, length) == length) {
+        return;
+    }
+    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleBytes:bytes length:length];
+    if (style.properties.count != 0) {
+        [self addParsedStyle:style withSelectors:selectors];
+    }
+}
+
+- (void)parseNestedStyleBytes:(const char*)bytes length:(NSUInteger)length selectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors namespaces:(NSMutableDictionary*)namespaces environment:(IJSVGMediaEnvironment)environment mediaMatches:(IJSVGByteCache**)mediaMatches nesting:(NSUInteger)nesting
+{
+    if (nesting > 64 || selectors.count == 0) {
+        return;
+    }
+
+    // Preserve the path for declarations without nested rules for exported SVGs with flat styles.
+    if (memchr(bytes, '{', length) == NULL && memchr(bytes, '@', length) == NULL) {
+        [self addDeclarationBytes:bytes length:length selectors:selectors];
+        return;
+    }
+    NSUInteger cursor = 0, declarations = 0;
+    while (cursor < length) {
+        NSUInteger start = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor, length);
+        cursor = start;
+        if (start == length) {
+            break;
+        }
+        BOOL atRule = bytes[start] == '@';
+
+        // Custom property values may themselves contain arbitrary brace blocks.
+        NSUInteger propertyEnd = start;
+        NSString* property = IJSVGStyleSheetConsumeIdentifier(bytes, length, &propertyEnd);
+        propertyEnd = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, propertyEnd, length);
+        BOOL custom = [property hasPrefix:@"--"] && propertyEnd < length && bytes[propertyEnd] == ':';
+        NSUInteger components = 0, braces = 0;
+        char quote = 0;
+        BOOL escaped = NO;
+        while (cursor < length) {
+            char c = bytes[cursor++];
+            if (IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
+                continue;
+            }
+            if (c == '(' || c == '[') {
+                components++;
+            } else if ((c == ')' || c == ']') && components != 0) {
+                components--;
+            } else if (components == 0 && c == '{') {
+                if (custom) {
+                    braces++;
+                    continue;
+                }
+
+                // Flush each declaration run in source order, including runs
+                // following nested rules and declarations inside nested media.
+                [self addDeclarationBytes:bytes + declarations length:start - declarations selectors:selectors];
+                NSUInteger body = cursor, depth = 1;
+                while (cursor < length && depth != 0) {
+                    c = bytes[cursor++];
+                    if (IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
+                        continue;
+                    }
+                    if (c == '(' || c == '[') {
+                        components++;
+                    } else if ((c == ')' || c == ']') && components != 0) {
+                        components--;
+                    } else if (components == 0 && c == '{') {
+                        depth++;
+                    } else if (components == 0 && c == '}') {
+                        depth--;
+                    }
+                }
+                NSUInteger end = depth == 0 ? cursor - 1 : cursor;
+                if (atRule) {
+                    NSArray* layerNames = IJSVGStyleSheetLayerNames(bytes + start, body - start - 1, NO);
+                    if (layerNames != nil) {
+                        IJSVGStyleSheetLayer* previous = _currentLayer;
+                        IJSVGStyleSheetLayer* layer = [self registerLayerWithName:layerNames.firstObject ?: @[]];
+                        if (layer != nil) {
+                            _currentLayer = layer;
+                            [self parseNestedStyleBytes:bytes + body length:end - body selectors:selectors namespaces:namespaces environment:environment mediaMatches:mediaMatches nesting:nesting + 1];
+                            _currentLayer = previous;
+                        }
+                    } else if ([self mediaRuleMatches:bytes + start length:body - start - 1 environment:environment cache:mediaMatches]) {
+                        [self parseNestedStyleBytes:bytes + body length:end - body selectors:selectors namespaces:namespaces environment:environment mediaMatches:mediaMatches nesting:nesting + 1];
+                    }
+                } else {
+                    NSString* prelude = IJSVGStyleSheetStringFromUTF8Bytes(bytes, start, body - 1);
+                    NSArray* nested = [IJSVGStyleSheetSelector selectorsWithString:prelude namespaces:namespaces parentSelectors:selectors];
+                    [self parseNestedStyleBytes:bytes + body length:end - body selectors:nested namespaces:namespaces environment:environment mediaMatches:mediaMatches nesting:nesting + 1];
+                }
+                declarations = cursor;
+                break;
+            } else if (components == 0 && c == '}' && braces != 0) {
+                braces--;
+            } else if (components == 0 && braces == 0 && c == ';') {
+                if (atRule) {
+                    [self parseLayerStatement:bytes + start length:cursor - start - 1];
+                    [self addDeclarationBytes:bytes + declarations length:start - declarations selectors:selectors];
+                    declarations = cursor;
+                }
+                break;
+            }
+        }
+    }
+    [self addDeclarationBytes:bytes + declarations length:length - declarations selectors:selectors];
 }
 
 - (void)addStyleRule:(NSString*)rule withSelectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors
@@ -335,8 +692,14 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
 {
     IJSVGStyleSheetRule* aRule = [[IJSVGStyleSheetRule alloc] init];
     aRule.style = style;
+    _hasCascadeDependentRules |= style.hasCascadeDependentValues;
     aRule.selectors = selectors;
     aRule.sourceIndex = _rules.count;
+    aRule.layerOrder = NSUIntegerMax;
+    if (_currentLayer != nil) {
+        [_currentLayer.rules addObject:aRule];
+        _layerOrderDirty = YES;
+    }
 
     for (IJSVGStyleSheetSelector* selector in selectors) {
         [aRule addMatchingSelector:selector];
@@ -354,7 +717,7 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
 
 - (IJSVGStyleSheetStyle*)styleForNode:(id<IJSVGStyleSheetSelectorNode>)node
 {
-    if (_rules.count == 1) {
+    if (_rules.count == 1 && !_hasCascadeDependentRules) {
         IJSVGStyleSheetRule* rule = _rules.firstObject;
         IJSVGStyleSheetSelector* selector = nil;
         return [rule matchesNode:node selector:&selector] ? rule.style : nil;
@@ -378,37 +741,39 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
             [candidates addIndexes:entries];
         }
     }
+    IJSVGStyleSheetDeclaration inlineEntries[32];
+    IJSVGStyleSheetDeclarations buffer = { inlineEntries, inlineEntries, 0, 32, NO };
     IJSVGStyleSheetRule* firstRule = nil;
     NSUInteger firstSpecificity = 0;
-    NSMutableDictionary<NSString*, IJSVGStyleSheetWinner*>* winners = nil;
-    for (NSUInteger index = candidates.firstIndex; index != NSNotFound; index = [candidates indexGreaterThanIndex:index]) {
-        IJSVGStyleSheetRule* rule = _rules[index];
-        IJSVGStyleSheetSelector* selector = nil;
-        if (![rule matchesNode:node selector:&selector]) {
-            continue;
+    @try {
+        for (NSUInteger index = candidates.firstIndex; index != NSNotFound; index = [candidates indexGreaterThanIndex:index]) {
+            IJSVGStyleSheetRule* rule = _rules[index];
+            IJSVGStyleSheetSelector* selector = nil;
+            if (![rule matchesNode:node selector:&selector]) {
+                continue;
+            }
+            if (firstRule == nil) {
+                firstRule = rule;
+                firstSpecificity = selector.specificity;
+                continue;
+            }
+            if (buffer.count == 0) {
+                IJSVGStyleSheetAppendDeclarations(&buffer, firstRule, firstSpecificity);
+            }
+            IJSVGStyleSheetAppendDeclarations(&buffer, rule, selector.specificity);
         }
-
-        // Reuse the existing style when only one rule matches.
-        if (firstRule == nil) {
-            firstRule = rule;
-            firstSpecificity = selector.specificity;
-            continue;
+        if (buffer.count == 0) {
+            if (!firstRule.style.hasCascadeDependentValues) {
+                return firstRule.style;
+            }
+            IJSVGStyleSheetAppendDeclarations(&buffer, firstRule, firstSpecificity);
         }
-        if (winners == nil) {
-            winners = [[NSMutableDictionary alloc] init];
-            IJSVGStyleSheetUpdateWinners(winners, firstRule, firstSpecificity);
+        return IJSVGStyleSheetResolveBuffer(&buffer);
+    } @finally {
+        if (buffer.entries != buffer.inlineEntries) {
+            free(buffer.entries);
         }
-        IJSVGStyleSheetUpdateWinners(winners, rule, selector.specificity);
     }
-    if (winners == nil) {
-        return firstRule.style;
-    }
-    IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
-    for (NSString* property in winners) {
-        IJSVGStyleSheetWinner* winner = winners[property];
-        [style copyProperty:property fromStyle:winner->rule.style];
-    }
-    return style;
 }
 
 @end

@@ -27,9 +27,19 @@ typedef struct {
     NSUInteger _attributeCount;
     BOOL _attributesReady;
     BOOL _hasCustomProperties;
+    BOOL _hasCascadeDependentValues;
+    NSMutableSet<NSString*>* _normalInlineRollbacks;
     NSMutableSet<NSString*>* _invalidVariableProperties;
     NSMutableDictionary<NSString*, NSString*>* _variableSources;
 }
+
+// Deferred cascade evaluation is needed only when variable substitution can request layer rollback.
+@property (nonatomic, copy) IJSVGStyleSheetStyle* (^layerResolver)(NSDictionary<NSString*, id>* properties);
+- (BOOL)hasCascadeDependentValues;
+- (BOOL)hasVariableProperties;
+- (void)suppressNormalInlineProperty:(NSString*)property;
+- (BOOL)suppressesNormalInlineProperty:(NSString*)property;
+- (IJSVGStyleSheetStyle*)styleByRemovingLayerReverts;
 
 // Parses a borrowed declaration slice with comments already removed.
 + (IJSVGStyleSheetStyle*)parseStyleBytes:(const char*)bytes length:(NSUInteger)length;

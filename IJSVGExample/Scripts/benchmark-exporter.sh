@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  benchmark-exporter.sh
+#  benchmark exporter.sh
 #  IJSVGExample
 #
 #  Created by Curtis Hard on 16/10/2026.

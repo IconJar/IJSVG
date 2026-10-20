@@ -6,9 +6,9 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGDescriptionNode.h>
 #import <IJSVGNodeParsing.h>
+#import <IJSVGXML.h>
 
 @implementation IJSVGDescriptionNode
 

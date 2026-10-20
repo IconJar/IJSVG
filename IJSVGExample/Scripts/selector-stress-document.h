@@ -1,3 +1,11 @@
+//
+//  selector stress document.h
+//  IJSVGExample
+//
+//  Created by Curtis Hard on 15/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #pragma once
 
 #import <Foundation/Foundation.h>

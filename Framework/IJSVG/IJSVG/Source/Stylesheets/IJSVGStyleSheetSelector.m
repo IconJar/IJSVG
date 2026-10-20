@@ -463,8 +463,10 @@ static BOOL IJSVGSelectorLanguageMatches(const char* language, const char* range
 @property (nonatomic) BOOL needsSelectorTree;
 @property (nonatomic) BOOL usesScope;
 @property (nonatomic) BOOL relative;
+@property (nonatomic, copy) NSArray<IJSVGStyleSheetSelector*>* parentSelectors;
+@property (nonatomic, strong) NSArray<IJSVGStyleSheetSelectorRaw*>* matchSelectors;
 @property (nonatomic, copy) NSDictionary<NSString*, NSString*>* namespaces;
-- (instancetype)initWithString:(NSString*)string depth:(NSUInteger)depth insideHas:(BOOL)insideHas relative:(BOOL)relative namespaces:(NSDictionary*)namespaces;
+- (instancetype)initWithString:(NSString*)string depth:(NSUInteger)depth insideHas:(BOOL)insideHas relative:(BOOL)relative namespaces:(NSDictionary*)namespaces parentSelectors:(NSArray<IJSVGStyleSheetSelector*>*)parentSelectors;
 - (BOOL)compileAtDepth:(NSUInteger)depth insideHas:(BOOL)insideHas;
 - (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node scope:(id<IJSVGStyleSheetSelectorNode>)scope;
 - (BOOL)matchesRelativeTo:(id<IJSVGStyleSheetSelectorNode>)anchor scope:(id<IJSVGStyleSheetSelectorNode>)scope;
@@ -506,7 +508,7 @@ static NSArray<NSString*>* IJSVGSelectorListParts(NSString* string)
     return parts;
 }
 
-static NSArray<IJSVGStyleSheetSelector*>* IJSVGSelectorParseList(NSString* string, BOOL forgiving, NSUInteger depth, BOOL insideHas, BOOL relative, NSDictionary* namespaces)
+static NSArray<IJSVGStyleSheetSelector*>* IJSVGSelectorParseList(NSString* string, BOOL forgiving, NSUInteger depth, BOOL insideHas, BOOL relative, NSDictionary* namespaces, NSArray<IJSVGStyleSheetSelector*>* parentSelectors)
 {
     NSArray* parts = IJSVGSelectorListParts(string);
     if (parts == nil || depth > 64) {
@@ -514,7 +516,7 @@ static NSArray<IJSVGStyleSheetSelector*>* IJSVGSelectorParseList(NSString* strin
     }
     NSMutableArray* result = [NSMutableArray array];
     for (NSString* part in parts) {
-        IJSVGStyleSheetSelector* item = [[IJSVGStyleSheetSelector alloc] initWithString:part depth:depth insideHas:insideHas relative:relative namespaces:namespaces];
+        IJSVGStyleSheetSelector* item = [[IJSVGStyleSheetSelector alloc] initWithString:part depth:depth insideHas:insideHas relative:relative namespaces:namespaces parentSelectors:parentSelectors];
         if (item == nil && !forgiving) {
             return nil;
         }
@@ -544,7 +546,7 @@ static BOOL IJSVGSelectorConsumeInteger(const char* bytes, NSUInteger length, NS
     return YES;
 }
 
-static BOOL IJSVGSelectorParseNth(NSString* argument, IJSVGStyleSheetPseudoClass* pseudo, NSUInteger depth, BOOL insideHas, NSDictionary* namespaces)
+static BOOL IJSVGSelectorParseNth(NSString* argument, IJSVGStyleSheetPseudoClass* pseudo, NSUInteger depth, BOOL insideHas, NSDictionary* namespaces, NSArray<IJSVGStyleSheetSelector*>* parentSelectors)
 {
     const char* bytes = argument.UTF8String;
     NSUInteger length = strlen(bytes);
@@ -597,7 +599,7 @@ static BOOL IJSVGSelectorParseNth(NSString* argument, IJSVGStyleSheetPseudoClass
         return NO;
     }
     NSString* filter = IJSVGStyleSheetStringFromUTF8Bytes(bytes, cursor + 2, length);
-    pseudo->selectors = IJSVGSelectorParseList(filter, NO, depth + 1, insideHas, NO, namespaces);
+    pseudo->selectors = IJSVGSelectorParseList(filter, NO, depth + 1, insideHas, NO, namespaces, parentSelectors);
     return pseudo->selectors.count != 0;
 }
 
@@ -736,6 +738,9 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
     if (raw.rootCount != 0 && node.selectorParent != nil) {
         return NO;
     }
+    if (raw.nestingCount != 0 && !(raw.nestingSelectors != nil ? IJSVGSelectorMatchesAny(raw.nestingSelectors, node, scope) : node == scope)) {
+        return NO;
+    }
     for (IJSVGStyleSheetPseudoClass* pseudo in raw.pseudoClasses) {
         if (!IJSVGSelectorMatchPseudo(pseudo, node, scope)) {
             return NO;
@@ -748,20 +753,64 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
 
 + (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string forgiving:(BOOL)forgiving
 {
-    return IJSVGSelectorParseList(string, forgiving, 0, NO, NO, nil);
+    return IJSVGSelectorParseList(string, forgiving, 0, NO, NO, nil, nil);
 }
 
 + (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string namespaces:(NSDictionary<NSString*, NSString*>*)namespaces
 {
-    return IJSVGSelectorParseList(string, NO, 0, NO, NO, namespaces);
+    return IJSVGSelectorParseList(string, NO, 0, NO, NO, namespaces, nil);
+}
+
++ (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string namespaces:(NSDictionary<NSString*, NSString*>*)namespaces parentSelectors:(NSArray<IJSVGStyleSheetSelector*>*)parents
+{
+    NSArray<NSString*>* parts = IJSVGSelectorListParts(string);
+    if (parts == nil || parents.count == 0) {
+        return nil;
+    }
+    NSMutableArray* result = [NSMutableArray array];
+    for (NSString* part in parts) {
+        if ([part stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length == 0) {
+            return nil;
+        }
+        const char* bytes = part.UTF8String;
+        NSUInteger length = strlen(bytes), brackets = 0;
+        char quote = 0;
+        BOOL escaped = NO, explicitNesting = NO;
+        for (NSUInteger index = 0; index < length; index++) {
+            char c = bytes[index];
+            if (IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
+                continue;
+            }
+            if (c == '[') {
+                brackets++;
+            } else if (c == ']' && brackets != 0) {
+                brackets--;
+            } else if (c == '&' && brackets == 0) {
+                explicitNesting = YES;
+            }
+        }
+
+        // Only the outer list of the rule gets an implicit parent anchor. A leading
+        // combinator needs it even when another ampersand occurs later.
+        NSUInteger start = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, 0, length);
+        BOOL relative = IJSVGStyleSheetCharIsCombinator(bytes[start])
+            || IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(bytes, start, length);
+        NSString* nested = explicitNesting && !relative ? part : [@"& " stringByAppendingString:part];
+        IJSVGStyleSheetSelector* item = [[self alloc] initWithString:nested depth:0 insideHas:NO relative:NO namespaces:namespaces parentSelectors:parents];
+        if (item == nil) {
+            return nil;
+        }
+        [result addObject:item];
+    }
+    return result;
 }
 
 - (id)initWithSelectorString:(NSString*)string
 {
-    return [self initWithString:string depth:0 insideHas:NO relative:NO namespaces:nil];
+    return [self initWithString:string depth:0 insideHas:NO relative:NO namespaces:nil parentSelectors:nil];
 }
 
-- (instancetype)initWithString:(NSString*)string depth:(NSUInteger)depth insideHas:(BOOL)insideHas relative:(BOOL)relative namespaces:(NSDictionary*)namespaces
+- (instancetype)initWithString:(NSString*)string depth:(NSUInteger)depth insideHas:(BOOL)insideHas relative:(BOOL)relative namespaces:(NSDictionary*)namespaces parentSelectors:(NSArray<IJSVGStyleSheetSelector*>*)parentSelectors
 {
     if ((self = [super init]) != nil) {
         if (depth > 64) {
@@ -769,6 +818,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
         }
         selector = [string stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
         _namespaces = [namespaces copy];
+        _parentSelectors = [parentSelectors copy];
         _relative = relative;
         _relativeCombinator = IJSVGStyleSheetSelectorCombinatorDescendant;
         if (relative) {
@@ -787,7 +837,11 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
         }
         _needsSelectorTree = _rawSelectors.count > 1;
         for (IJSVGStyleSheetSelectorRaw* raw in _rawSelectors) {
-            _needsSelectorTree |= raw.attributes.count != 0 || raw.namespaceURI != nil;
+            _needsSelectorTree |= raw.attributes.count != 0 || raw.namespaceURI != nil || raw.nestingCount != 0;
+            _usesScope |= raw.nestingCount != 0 && raw.nestingSelectors == nil;
+            for (IJSVGStyleSheetSelector* parent in raw.nestingSelectors) {
+                _usesScope |= parent.usesScope;
+            }
             for (IJSVGStyleSheetPseudoClass* pseudo in raw.pseudoClasses) {
                 _needsSelectorTree |= pseudo->kind <= IJSVGSelectorPseudoNth || pseudo->kind == IJSVGSelectorPseudoHas || pseudo->kind == IJSVGSelectorPseudoLang;
                 _usesScope |= pseudo->kind == IJSVGSelectorPseudoScope;
@@ -798,6 +852,33 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
             }
         }
         [self calculateSpecificity];
+
+        // A bare & matching one compound can use that compound directly.
+        // Keep the original selectors for specificity and namespace processing.
+        // The matching array only bypasses redundant traversal of the parent list.
+        NSMutableArray* matches = nil;
+        for (NSUInteger index = 0; index < _rawSelectors.count; index++) {
+            IJSVGStyleSheetSelectorRaw* raw = _rawSelectors[index];
+            if (raw.nestingCount == 0 || raw.nestingSelectors.count != 1
+                || raw.explicitType || raw.namespaceURI != nil || raw.tag != nil
+                || raw.identifiers.count != 0 || raw.classes.count != 0
+                || raw.attributes.count != 0 || raw.pseudoClasses.count != 0 || raw.rootCount != 0) {
+                continue;
+            }
+            IJSVGStyleSheetSelector* parent = raw.nestingSelectors.firstObject;
+            if (parent.relative || parent.matchSelectors.count != 1) {
+                continue;
+            }
+            IJSVGStyleSheetSelectorRaw* replacement = parent.matchSelectors.firstObject;
+            if (index + 1 != _rawSelectors.count && raw.combinator != replacement.combinator) {
+                continue;
+            }
+            if (matches == nil) {
+                matches = [_rawSelectors mutableCopy];
+            }
+            matches[index] = replacement;
+        }
+        _matchSelectors = matches ?: _rawSelectors;
     }
     return self;
 }
@@ -819,6 +900,13 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
             + MIN(raw.identifiers.count, SPECIFICITY_MASK) * SPECIFICITY_IDENTIFIER
             + MIN(raw.classCount + raw.attributes.count, SPECIFICITY_MASK) * SPECIFICITY_CLASS;
         _specificity = IJSVGSelectorAddSpecificity(_specificity, own);
+        NSUInteger parentSpecificity = 0;
+        for (IJSVGStyleSheetSelector* parent in raw.nestingSelectors) {
+            parentSpecificity = MAX(parentSpecificity, parent.specificity);
+        }
+        for (NSUInteger index = 0; index < raw.nestingCount; index++) {
+            _specificity = IJSVGSelectorAddSpecificity(_specificity, parentSpecificity);
+        }
         for (IJSVGStyleSheetPseudoClass* pseudo in raw.pseudoClasses) {
             if (pseudo->kind == IJSVGSelectorPseudoWhere) {
                 continue;
@@ -871,7 +959,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
         }
         case IJSVGSelectorPseudoNth:
             if (argument != nil) {
-                return IJSVGSelectorParseNth(argument, pseudo, depth, insideHas, _namespaces) ? pseudo : nil;
+                return IJSVGSelectorParseNth(argument, pseudo, depth, insideHas, _namespaces, _parentSelectors) ? pseudo : nil;
             }
             pseudo->b = 1;
             break;
@@ -883,7 +971,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
             if (has && insideHas) {
                 return nil;
             }
-            pseudo->selectors = IJSVGSelectorParseList(argument, (flags & IJSVGSelectorPseudoForgiving) != 0, depth + 1, insideHas || has, has, _namespaces);
+            pseudo->selectors = IJSVGSelectorParseList(argument, (flags & IJSVGSelectorPseudoForgiving) != 0, depth + 1, insideHas || has, has, _namespaces, _parentSelectors);
             if (!has) {
                 for (IJSVGStyleSheetSelector* nested in pseudo->selectors) {
                     if (!nested.matchingSelector.explicitType) {
@@ -920,7 +1008,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
         BOOL hasSelector = NO;
         NSMutableArray* attributes = [[NSMutableArray alloc] init];
         raw.namespaceURI = _namespaces[@""];
-        if (bytes[cursor] != '.' && bytes[cursor] != '#' && bytes[cursor] != ':' && bytes[cursor] != '[') {
+        if (bytes[cursor] != '.' && bytes[cursor] != '#' && bytes[cursor] != ':' && bytes[cursor] != '[' && bytes[cursor] != '&') {
             NSString* tag = nil;
             NSString* uri = nil;
             if (!IJSVGSelectorConsumeQualifiedName(bytes, length, &cursor, _namespaces, NO, &tag, &uri)) {
@@ -931,7 +1019,14 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
             raw.explicitType = YES;
             hasSelector = YES;
         }
-        while (cursor < length && (bytes[cursor] == '.' || bytes[cursor] == '#' || bytes[cursor] == ':' || bytes[cursor] == '[')) {
+        while (cursor < length && (bytes[cursor] == '.' || bytes[cursor] == '#' || bytes[cursor] == ':' || bytes[cursor] == '[' || bytes[cursor] == '&')) {
+            if (bytes[cursor] == '&') {
+                raw.nestingCount++;
+                raw.nestingSelectors = _parentSelectors;
+                cursor++;
+                hasSelector = YES;
+                continue;
+            }
             if (bytes[cursor] == '[') {
                 IJSVGStyleSheetAttributeSelector* attribute = IJSVGSelectorConsumeAttribute(bytes, length, &cursor, _namespaces);
                 if (attribute == nil) {
@@ -993,6 +1088,9 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
         if (!hasSelector) {
             return NO;
         }
+        if (raw.nestingCount != 0 && !raw.explicitType) {
+            raw.namespaceURI = nil;
+        }
         raw.attributes = attributes.count != 0 ? attributes : nil;
         raw.pseudoClasses = pseudos.count != 0 ? pseudos : nil;
         raw.identifiers = identifiers.count != 0 ? identifiers : nil;
@@ -1032,7 +1130,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
     if (_relative && index + 1 == _rawSelectors.count) {
         return node == anchor;
     }
-    IJSVGStyleSheetSelectorRaw* raw = _rawSelectors[index];
+    IJSVGStyleSheetSelectorRaw* raw = _matchSelectors[index];
     if (!IJSVGStyleSheetMatchSelector(node, raw, scope)) {
         return NO;
     }

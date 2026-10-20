@@ -169,7 +169,7 @@
     }
     NSString* body = [NSString stringWithFormat:@"<g transform='translate(100 0) scale(6.25)'>%@</g>", svg];
 
-    // Allow small rasterizer and blur differences; the clipped blue strip
+    // Allow small rasterizer and blur differences. The clipped blue strip
     // exceeds this tolerance.
     [self compareBody:body name:@"atm-inner-shadows" tolerance:0.011];
 }

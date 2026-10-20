@@ -6,7 +6,6 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGForeignObject.h>
 #import <IJSVG/IJSVGMask.h>
@@ -15,6 +14,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGSwitch.h>
+#import <IJSVGXML.h>
 
 static const char* IJSVGNodeKeywordBytes(NSString* value)
 {
@@ -155,7 +155,7 @@ static void IJSVGStoreInheritedGeometry(IJSVGGraphicsNode* node, IJSVGNodeParsin
             continue;
         }
         NSString* value = [context->inlineStyle property:name];
-        if (value == nil || ([context->style isPropertyImportant:name] && ![context->inlineStyle isPropertyImportant:name])) {
+        if (value == nil || ([context->style suppressesNormalInlineProperty:name] && ![context->inlineStyle isPropertyImportant:name])) {
             value = [context->style property:name];
         }
         if (value == nil) {

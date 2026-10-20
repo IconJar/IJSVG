@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 
 @class IJSVGNode;
+@class IJSVGStyleSheetSelector;
 @class IJSVGStyleSheetPseudoClass;
 @class IJSVGStyleSheetAttributeSelector;
 
@@ -25,6 +26,10 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
 }
 
 @property (nonatomic, assign) NSUInteger rootCount;
+
+// Shared parent lists avoid expanding nested selectors into a Cartesian product.
+@property (nonatomic, copy) NSArray<IJSVGStyleSheetSelector*>* nestingSelectors;
+@property (nonatomic) NSUInteger nestingCount;
 @property (nonatomic, copy) NSArray<IJSVGStyleSheetPseudoClass*>* pseudoClasses;
 @property (nonatomic, copy) NSArray<NSString*>* identifiers;
 @property (nonatomic) NSUInteger classCount;

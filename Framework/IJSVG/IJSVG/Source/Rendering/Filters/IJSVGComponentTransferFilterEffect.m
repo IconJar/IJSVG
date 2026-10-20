@@ -26,8 +26,8 @@ static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w
         return;
     }
 
-    // Keep one small block's four channels together. Decode the source once,
-    // then clamp and premultiply during the single interleaved write-back.
+    // Keep the four channels of each small block together. Decode the source once,
+    // then clamp and premultiply during the single interleaved write operation.
     NSMutableData* scratch = [NSMutableData dataWithLength:capacity * 6 * sizeof(double)];
     double* channels = scratch.mutableBytes;
     double* transformed = channels + capacity * 4;

@@ -6,11 +6,11 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGGraphicsNode.h>
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGReference.h>
+#import <IJSVGXML.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

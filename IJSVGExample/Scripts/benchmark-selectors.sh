@@ -1,4 +1,12 @@
 #!/bin/sh
+#
+#  benchmark selectors.sh
+#  IJSVGExample
+#
+#  Created by Curtis Hard on 15/10/2026.
+#  Copyright © 2026 Curtis Hard. All rights reserved.
+#
+
 # Run a Release package build and benchmark an SVG with many selectors.
 set -eu
 repository_root="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -10,6 +18,7 @@ xcrun swift build --package-path "$repository_root" --scratch-path "$scratch_dir
 products="$(xcrun swift build --package-path "$repository_root" --scratch-path "$scratch_directory" -c release --show-bin-path)"
 framework="$repository_root/Framework/IJSVG/IJSVG"
 xcrun clang -O3 -fobjc-arc -fmodules \
+    -I "$repository_root/IJSVGExample/Scripts" \
     -I "$framework/include" -I "$framework/PrivateHeaders" \
     -I "$framework/Source/Stylesheets" -I "$framework/Source/Nodes" \
     -I "$framework/Source/Parsing" -I "$framework/Source/Rendering" \

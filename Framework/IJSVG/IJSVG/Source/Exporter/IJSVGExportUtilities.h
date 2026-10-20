@@ -27,8 +27,8 @@ FOUNDATION_EXPORT NSDictionary<NSString*, NSString*>* IJSVGExportSharedAttribute
 // Replaces an attached wrapper with its children, retaining their order.
 FOUNDATION_EXPORT void IJSVGExportUnwrapElement(IJSVGExportElement* element);
 
-// Groups are ordered by the first repeated occurrence; paths within each group
-// retain document order. Paths with vector-effect remain explicit.
+// Groups are ordered by the first repeated occurrence. Paths within each group
+// retain document order. Paths with a vector effect remain explicit.
 FOUNDATION_EXPORT NSArray<NSArray<IJSVGExportElement*>*>* IJSVGExportDuplicatePaths(IJSVGExportDocument* document);
 
 // Fixed exporter queries walk the C tree in document order.

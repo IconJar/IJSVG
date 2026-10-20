@@ -119,7 +119,7 @@ float IJSVGFilterSamplerValue(const IJSVGFilterSampler* sampler, CGFloat x, CGFl
 // Reuse the same sample positions for all four channels.
 void IJSVGFilterSamplerPixel(const IJSVGFilterSampler* sampler, CGFloat x, CGFloat y, float pixel[4])
 {
-    // Interior samples need no edge remapping or per-tap bounds checks.
+    // Interior samples need no edge remapping or bounds checks for each tap.
     // Retain double arithmetic and tap order to match the general sampler.
     if (x >= sampler->left && x < sampler->right && y >= sampler->top && y < sampler->bottom) {
         NSInteger ix = floor(x), iy = floor(y);

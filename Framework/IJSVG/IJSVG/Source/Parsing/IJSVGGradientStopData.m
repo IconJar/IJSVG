@@ -6,10 +6,10 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGColorNode.h>
+#import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVGGradientStopData.h>
-#import <IJSVGStyleSheetStyle.h>
+#import <IJSVGXML.h>
 
 IJSVGGradientStopData IJSVGGradientStopDataCreate(IJSVGStop* stop, IJSVGXMLNode* element)
 {

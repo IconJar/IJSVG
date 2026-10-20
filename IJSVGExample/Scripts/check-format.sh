@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  check-format.sh
+#  check format.sh
 #  IJSVGExample
 #
 #  Created by Curtis Hard on 13/10/2026.

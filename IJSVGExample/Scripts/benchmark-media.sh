@@ -1,4 +1,12 @@
 #!/bin/sh
+#
+#  benchmark media.sh
+#  IJSVGExample
+#
+#  Created by Curtis Hard on 15/10/2026.
+#  Copyright © 2026 Curtis Hard. All rights reserved.
+#
+
 # Run a Release package build and benchmark heavy SVG media queries against equivalent plain CSS.
 set -eu
 repository_root="$(cd "$(dirname "$0")/../.." && pwd)"

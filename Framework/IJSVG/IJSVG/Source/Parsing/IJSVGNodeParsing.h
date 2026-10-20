@@ -6,7 +6,6 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGAnchor.h>
 #import <IJSVG/IJSVGCircle.h>
@@ -58,6 +57,7 @@
 #import <IJSVGParserTextUtils.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVGSwitch.h>
+#import <IJSVGXML.h>
 
 // Deferred values remain on the caller stack until the children are parsed.
 // Retain resolved strings because the temporary cascade may finish sooner.

@@ -1,5 +1,5 @@
 //
-//  benchmark-exporter.m
+//  benchmark exporter.m
 //  IJSVGExample
 //
 //  Created by Curtis Hard on 16/10/2026.
