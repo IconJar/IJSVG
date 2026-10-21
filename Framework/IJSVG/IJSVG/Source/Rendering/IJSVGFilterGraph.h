@@ -57,6 +57,7 @@ CGRect IJSVGFilterRegionForNode(IJSVGGraphicsNode* node, IJSVGUnitType units, CG
 // otherwise. The source must be a renderer owned RGBA8 bitmap and stays
 // unchanged.
 - (CGImageRef)newCGImageForWhiteAlpha:(CGContextRef)bitmap;
+- (BOOL)requiresOnlySourceAlpha;
 
 // Plans direct blur/shadow rendering, choosing CPU or Metal by working set
 // size. Returns NULL when Core Image is required.

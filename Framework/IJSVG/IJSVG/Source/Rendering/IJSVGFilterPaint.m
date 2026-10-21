@@ -25,6 +25,59 @@
 #import <Metal/Metal.h>
 #import <limits.h>
 
+static _Thread_local CGContextRef IJSVGAlphaOcclusionContext;
+static _Thread_local BOOL IJSVGAlphaOcclusionPlanning;
+static _Thread_local NSMutableSet* __unsafe_unretained IJSVGAlphaOccludedPaints;
+static _Thread_local NSMutableSet* __unsafe_unretained IJSVGAlphaVisitedPaints;
+
+static BOOL IJSVGAlphaOcclusionEligible(IJSVGPaint* paint)
+{
+    // A transparency layer has its own pixels, even when the CGContext pointer
+    // is unchanged. Descendants that depend on the destination also need the colours.
+    if (paint.opacity != 1 || paint.isolated || paint.blendingMode != kCGBlendModeNormal) {
+        return NO;
+    }
+    if (paint.paintTraits & IJSVGPaintTraitFilter) {
+        return YES;
+    }
+    for (IJSVGPaint* child in paint.children) {
+        if (!IJSVGAlphaOcclusionEligible(child)) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+static BOOL IJSVGFilterAreaIsOpaque(CGContextRef ctx, CGRect region)
+{
+    if (ctx == NULL || ctx != IJSVGAlphaOcclusionContext) {
+        return NO;
+    }
+
+    // Use an expanded bounding box in device space, including fractional edge
+    // coverage. Bitmap rows run opposite to the unflipped device Y axis.
+    CGRect area = CGRectIntersection(region, CGContextGetClipBoundingBox(ctx));
+    area = CGRectIntegral(CGRectInset(CGRectApplyAffineTransform(area, CGContextGetCTM(ctx)), -2, -2));
+    area = CGRectIntersection(area, CGRectMake(0, 0, CGBitmapContextGetWidth(ctx), CGBitmapContextGetHeight(ctx)));
+    if (CGRectIsNull(area) || CGRectIsEmpty(area)) {
+        return YES;
+    }
+    if (!isfinite(area.origin.x) || !isfinite(area.origin.y) || !isfinite(area.size.width) || !isfinite(area.size.height)) {
+        return NO;
+    }
+    const unsigned char* bytes = CGBitmapContextGetData(ctx);
+    size_t height = CGBitmapContextGetHeight(ctx);
+    size_t stride = CGBitmapContextGetBytesPerRow(ctx);
+    for (size_t y = area.origin.y; y < CGRectGetMaxY(area); y++) {
+        for (size_t x = area.origin.x; x < CGRectGetMaxX(area); x++) {
+            if (bytes[(height - 1 - y) * stride + x * 4 + 3] != 255) {
+                return NO;
+            }
+        }
+    }
+    return YES;
+}
+
 static _Thread_local CGContextRef IJSVGFilterBitmapContext;
 static _Thread_local CGContextRef IJSVGFilterBackgroundContext;
 static _Thread_local CGRect IJSVGFilterBackgroundClip;
@@ -1500,16 +1553,53 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     IJSVGPaint* sourcePaint = self.sourcePaint;
     CGContextTranslateCTM(bitmap, sourcePaint.frame.origin.x, sourcePaint.frame.origin.y);
 
-    // Batch independent child effects before applying this enclosing filter.
-    // Preserve the actual depth for nested sampling and rounding rules.
+    CGContextRef priorAlphaContext = IJSVGAlphaOcclusionContext;
+    BOOL priorPlanning = IJSVGAlphaOcclusionPlanning;
+    NSMutableSet* priorOccluded = IJSVGAlphaOccludedPaints;
+    NSMutableSet* priorVisited = IJSVGAlphaVisitedPaints;
+    NSMutableSet* occluded __attribute__((objc_precise_lifetime)) = nil;
+    NSMutableSet* visited __attribute__((objc_precise_lifetime)) = nil;
     NSSet<IJSVGFilterPaint*>* childFilters = IJSVGCurrentFilterBatch == nil ? [IJSVGFilterPaint batchableFiltersForPaint:sourcePaint] : nil;
-    BOOL batched = childFilters.count != 0 && [IJSVGFilterPaint renderBatchedPaints:childFilters
-                                                                          inContext:bitmap
-                                                                       drawingBlock:^(CGContextRef sourceContext) {
-                                                                           [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:sourceContext];
-                                                                       }];
-    if (!batched) {
-        [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:bitmap];
+    BOOL alphaOnly = childFilters.count >= 3 && [graph requiresOnlySourceAlpha] && [self canCacheOutput] && IJSVGAlphaOcclusionEligible(sourcePaint);
+    @try {
+        // Source over cannot change fully opaque alpha. A white alpha matrix
+        // discards RGB, so enclosed filter outputs can be omitted in those pixels.
+        if (alphaOnly) {
+            occluded = [[NSMutableSet alloc] init];
+            visited = [[NSMutableSet alloc] init];
+            IJSVGAlphaVisitedPaints = visited;
+            IJSVGAlphaOcclusionContext = bitmap;
+            IJSVGAlphaOccludedPaints = occluded;
+            IJSVGAlphaOcclusionPlanning = YES;
+            [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:bitmap];
+            IJSVGAlphaOcclusionPlanning = NO;
+            CGContextSaveGState(bitmap);
+            CGContextResetClip(bitmap);
+            CGContextConcatCTM(bitmap, CGAffineTransformInvert(CGContextGetCTM(bitmap)));
+            CGContextClearRect(bitmap, graph.extent);
+            CGContextRestoreGState(bitmap);
+        }
+
+        // Batch independent child effects before applying this enclosing filter.
+        // Preserve the actual depth for nested sampling and rounding rules.
+        if (occluded.count != 0) {
+            NSMutableSet* remaining = childFilters.mutableCopy;
+            [remaining minusSet:occluded];
+            childFilters = remaining;
+        }
+        BOOL batched = childFilters.count != 0 && [IJSVGFilterPaint renderBatchedPaints:childFilters
+                                                                              inContext:bitmap
+                                                                           drawingBlock:^(CGContextRef sourceContext) {
+                                                                               [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:sourceContext];
+                                                                           }];
+        if (!batched) {
+            [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:bitmap];
+        }
+    } @finally {
+        IJSVGAlphaOcclusionContext = priorAlphaContext;
+        IJSVGAlphaOcclusionPlanning = priorPlanning;
+        IJSVGAlphaOccludedPaints = priorOccluded;
+        IJSVGAlphaVisitedPaints = priorVisited;
     }
 
     // Try the targeted CPU/SIMD filters before the general Core Image path.
@@ -1571,6 +1661,22 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
     CGRect region = self.filterRegion;
+    if (ctx == IJSVGAlphaOcclusionContext) {
+        if (IJSVGAlphaOcclusionPlanning) {
+            // A paint reused at multiple placements must not inherit a
+            // coverage decision made for only its first placement.
+            if ([IJSVGAlphaVisitedPaints containsObject:self]) {
+                [IJSVGAlphaOccludedPaints removeObject:self];
+            } else if (IJSVGFilterAreaIsOpaque(ctx, region)) {
+                [IJSVGAlphaOccludedPaints addObject:self];
+            }
+            [IJSVGAlphaVisitedPaints addObject:self];
+            return;
+        }
+        if ([IJSVGAlphaOccludedPaints containsObject:self]) {
+            return;
+        }
+    }
 
     if (IJSVGFilterRectIsFinite(region) == NO || CGRectIsEmpty(region) == YES) {
         return;

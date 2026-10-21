@@ -651,6 +651,11 @@ CGRect IJSVGFilterRegionForNode(IJSVGGraphicsNode* node, IJSVGUnitType units, CG
     return primitive;
 }
 
+- (BOOL)requiresOnlySourceAlpha
+{
+    return [self whiteAlphaPrimitive] != nil;
+}
+
 // White with unchanged alpha needs no colour conversion, even in linearRGB.
 // Keep the source and primitive crops separate to preserve fractional coverage.
 - (CGImageRef)newCGImageForWhiteAlpha:(CGContextRef)bitmap
