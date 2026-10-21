@@ -1,0 +1,41 @@
+{
+  "configurations" : [
+    {
+      "id" : "F20F9C33-2AD2-409F-BEFE-C7A4D4BE67D6",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "environmentVariableEntries" : [
+      {
+        "key" : "CG_CONTEXT_SHOW_BACKTRACE",
+        "value" : "1"
+      },
+      {
+        "key" : "CG_NUMERICS_SHOW_BACKTRACE",
+        "value" : "1"
+      }
+    ],
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:IJSVGExample.xcodeproj",
+      "identifier" : "5956657619B62F4600D805FF",
+      "name" : "IJSVGExample"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:IJSVGExample.xcodeproj",
+        "identifier" : "5956658919B62F4700D805FF",
+        "name" : "IJSVGExampleTests"
+      }
+    }
+  ],
+  "version" : 1
+}

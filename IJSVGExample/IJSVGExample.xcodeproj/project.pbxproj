@@ -279,6 +279,7 @@
 		594688AC307E8E04008E2E8A /* IJSVGPlainGradientTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGPlainGradientTests.m; sourceTree = "<group>"; };
 		59468B4730803518008E2E8A /* IJSVGRasterColorSpaceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGRasterColorSpaceTests.m; sourceTree = "<group>"; };
 		594A461A3089664B0075D42B /* IJSVGAlphaOcclusionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGAlphaOcclusionTests.m; sourceTree = "<group>"; };
+		594A4623308983310075D42B /* IJSVGExample.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = IJSVGExample.xctestplan; sourceTree = "<group>"; };
 		595151B23080CD5800B07555 /* IJSVGMemorySafetyTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMemorySafetyTests.m; sourceTree = "<group>"; };
 		5956657719B62F4600D805FF /* IJSVGExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJSVGExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5956657B19B62F4600D805FF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -395,6 +396,7 @@
 		5956656E19B62F4600D805FF = {
 			isa = PBXGroup;
 			children = (
+				594A4623308983310075D42B /* IJSVGExample.xctestplan */,
 				59FB54B3280B038200D148FA /* IJSVG.xcodeproj */,
 				5956657919B62F4600D805FF /* IJSVGExample */,
 				5956658D19B62F4700D805FF /* IJSVGExampleTests */,
