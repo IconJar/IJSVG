@@ -1195,6 +1195,12 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     if (_outputSignature != nil || IJSVGCurrentFilterBatch.collecting || IJSVGCurrentFilterBatch.preflighting) {
         return extent;
     }
+    return [self clippedOutputExtentForGraph:graph context:ctx];
+}
+
+- (CGRect)clippedOutputExtentForGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx
+{
+    CGRect extent = graph.extent;
     CGRect clip = CGContextGetClipBoundingBox(ctx);
     if (!IJSVGFilterRectIsFinite(clip)) {
         return extent;
@@ -1224,8 +1230,12 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 // back.
 - (CGRect)requiredSourceExtentForGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx
 {
+    return [self requiredSourceExtentForGraph:graph outputExtent:[self requestedOutputExtentForGraph:graph context:ctx]];
+}
+
+- (CGRect)requiredSourceExtentForGraph:(IJSVGFilterGraph*)graph outputExtent:(CGRect)required
+{
     CGRect extent = graph.extent;
-    CGRect required = [self requestedOutputExtentForGraph:graph context:ctx];
     if (CGRectEqualToRect(required, extent) || !self.canCacheOutput) {
         return extent;
     }
@@ -1623,23 +1633,34 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     graph.extent = (CGRect) { CGPointZero, pixelSize };
     graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale, -workRect.origin.x * scale, -workRect.origin.y * scale);
 
-    // Collection retains the complete sampling rectangle. Reuse it before
-    // destination clipping shrinks the transient work rectangle: the cached
-    // pixels already contain the required halo and Quartz applies the clip.
+    // Plan source coverage before caching or collecting. The cache signature
+    // includes the resulting sampling rectangle, so a later wider clip cannot
+    // reuse an incomplete image. Keep the original scale and tile grid.
+    // Sheared image placement can change the Quartz resampling footprint when
+    // the source bitmap is cropped. Keep trimming limited to transient output.
+    CGFloat axesProduct = hypot(pixelTransform.a, pixelTransform.b) * hypot(pixelTransform.c, pixelTransform.d);
+    BOOL orthogonal = isfinite(axesProduct) && axesProduct > 0.f
+        && fabs(pixelTransform.a * pixelTransform.c + pixelTransform.b * pixelTransform.d) <= axesProduct * 1e-9;
+    CGRect required = orthogonal
+        ? [self requiredSourceExtentForGraph:graph outputExtent:[self clippedOutputExtentForGraph:graph context:ctx]]
+        : [self requiredSourceExtentForGraph:graph context:ctx];
+    if (CGRectIsEmpty(required) || CGRectIsNull(required)) {
+        return;
+    }
+    if (!CGRectEqualToRect(required, graph.extent)) {
+        required = CGRectIntersection(graph.extent, IJSVGFilterAlignedRect(required, CGPointZero));
+        workRect = CGRectApplyAffineTransform(required, CGAffineTransformInvert(graph.imageTransform));
+        pixelSize = required.size;
+    }
+
+    // Replay only a matching sampling rectangle. Collection can have a wider
+    // clip than the destination, especially after transformed mask placement.
     // Compare in pixels to tolerate transform roundoff without accepting a
     // different sampling grid (the dimensions must still match exactly).
     IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
     if (!batch.collecting && cached.renderedImage != NULL && CGSizeEqualToSize(cached.pixelSize, pixelSize) && fabs(cached.workRect.origin.x - workRect.origin.x) * scale < 1e-7 && fabs(cached.workRect.origin.y - workRect.origin.y) * scale < 1e-7 && fabs(cached.workRect.size.width - workRect.size.width) * scale < 1e-7 && fabs(cached.workRect.size.height - workRect.size.height) * scale < 1e-7) {
         [self drawFilteredImage:cached.renderedImage context:ctx region:region workRect:workRect independentPixels:NO];
         return;
-    }
-    CGRect required = [self requiredSourceExtentForGraph:graph context:ctx];
-
-    // Keep the allocation on the original sampling grid, including rotations.
-    if (!CGRectIsEmpty(required) && !CGRectIsNull(required) && !CGRectEqualToRect(required, graph.extent)) {
-        required = CGRectIntersection(graph.extent, IJSVGFilterAlignedRect(required, CGPointZero));
-        workRect = CGRectApplyAffineTransform(required, CGAffineTransformInvert(graph.imageTransform));
-        pixelSize = required.size;
     }
     if (batch.preflighting) {
         [self preflightPixelSize:pixelSize batch:batch];
