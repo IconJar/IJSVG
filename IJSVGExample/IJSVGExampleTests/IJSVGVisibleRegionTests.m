@@ -12,7 +12,7 @@
 #import <objc/runtime.h>
 
 @interface IJSVGFilterPaint (VisibleRegionTesting)
-- (CGRect)requestedOutputExtentForGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx;
+- (CGRect)clippedOutputExtentForGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx;
 
 - (void)renderGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx region:(CGRect)region workRect:(CGRect)workRect pixelSize:(CGSize)pixelSize scale:(CGFloat)scale;
 @end
@@ -43,7 +43,8 @@ static _Thread_local NSUInteger IJSVGTestCulledShapes;
 
 @implementation IJSVGFullExtentFilterPaint
 
-- (CGRect)requestedOutputExtentForGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx
+// Bypass clip planning before allocation as well as during filter evaluation.
+- (CGRect)clippedOutputExtentForGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx
 {
     return graph.extent;
 }
