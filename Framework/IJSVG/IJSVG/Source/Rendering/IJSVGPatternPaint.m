@@ -12,14 +12,45 @@
 #import <IJSVGFilterPaint.h>
 #import <IJSVGPatternPaint.h>
 
+// Each CGPattern owns its drawing parameters, even if Quartz defers its callback.
+@interface IJSVGPatternDrawingInfo : NSObject
+
+@property (nonatomic, strong, readonly) IJSVGPatternPaint* owner;
+@property (nonatomic, strong, readonly) IJSVGPaint* pattern;
+@property (nonatomic, assign, readonly) CGSize cellSize;
+@property (nonatomic, assign, readonly) CGRect viewBox;
+@property (nonatomic, assign, readonly) CGAffineTransform pixelTransform;
+@property (nonatomic, assign, readonly) IJSVGViewBoxAlignment alignment;
+@property (nonatomic, assign, readonly) IJSVGViewBoxMeetOrSlice meetOrSlice;
+
+- (instancetype)initWithPaint:(IJSVGPatternPaint*)paint cellSize:(CGSize)cellSize viewBox:(CGRect)viewBox pixelTransform:(CGAffineTransform)pixelTransform;
+
+@end
+
+@implementation IJSVGPatternDrawingInfo
+
+- (instancetype)initWithPaint:(IJSVGPatternPaint*)paint cellSize:(CGSize)cellSize viewBox:(CGRect)viewBox pixelTransform:(CGAffineTransform)pixelTransform
+{
+    if ((self = [super init])) {
+        // Keep the owner alive for weak parent references in the paint tree.
+        _owner = paint;
+        _pattern = paint.pattern;
+        _cellSize = cellSize;
+        _viewBox = viewBox;
+        _pixelTransform = pixelTransform;
+        _alignment = paint.patternNode.viewBoxAlignment;
+        _meetOrSlice = paint.patternNode.viewBoxMeetOrSlice;
+    }
+    return self;
+}
+
+@end
+
 @interface IJSVGPatternPaint () {
     CGImageRef _cachedImage;
     CGFloat _cachedScale;
     CGRect _cachedBounds;
 }
-
-@property (nonatomic, assign) CGSize cellSize;
-@property (nonatomic, assign) CGRect viewBox;
 @end
 
 @implementation IJSVGPatternPaint
@@ -34,23 +65,27 @@ static void IJSVGQuartzPatternRelease(void* info)
     CFRelease(info);
 }
 
+/// Preserves destination resolution while filters render inside a pattern cell.
 static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
-    // reassign the paint
-    IJSVGPatternPaint* paint = (__bridge IJSVGPatternPaint*)info;
-    CGSize size = paint.cellSize;
+    IJSVGPatternDrawingInfo* drawingInfo = (__bridge IJSVGPatternDrawingInfo*)info;
+    CGSize size = drawingInfo.cellSize;
     CGContextSaveGState(ctx);
-    CGRect rect = CGRectMake(0.f, 0.f, size.width, size.height);
-    CGContextClipToRect(ctx, rect);
-
-    IJSVGViewBoxAlignment alignment = paint.patternNode.viewBoxAlignment;
-    IJSVGViewBoxMeetOrSlice meetOrSlice = paint.patternNode.viewBoxMeetOrSlice;
-    CGRect viewBox = paint.viewBox;
-    IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
-        [IJSVGPaint renderPaint:paint.pattern inContext:ctx options:IJSVGPaintDrawingOptionNone];
-    };
-    IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice, drawBlock);
-    CGContextRestoreGState(ctx);
+    @try {
+        CGRect rect = CGRectMake(0.f, 0.f, size.width, size.height);
+        CGContextClipToRect(ctx, rect);
+        // Register the mapping before applying the viewBox so both its scale
+        // and translation are picked up from subsequent context transforms.
+        [IJSVGFilterPaint drawInContext:ctx
+                         pixelTransform:drawingInfo.pixelTransform
+                           drawingBlock:^{
+                               IJSVGContextDrawViewBox(ctx, drawingInfo.viewBox, rect, drawingInfo.alignment, drawingInfo.meetOrSlice, ^(CGFloat scale[]) {
+                                   [IJSVGPaint renderPaint:drawingInfo.pattern inContext:ctx options:IJSVGPaintDrawingOptionNone];
+                               });
+                           }];
+    } @finally {
+        CGContextRestoreGState(ctx);
+    }
 }
 
 - (void)computeCellSize:(CGSize*)cellSize viewBox:(CGRect*)viewBox origin:(CGPoint*)origin
@@ -91,6 +126,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     }
 }
 
+/// Carries the final pixel scale into deferred pattern drawing.
 - (void)drawPatternInContext:(CGContextRef)ctx
 {
     // holder for callback
@@ -107,7 +143,9 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGAffineTransform transform = [IJSVGPaint userSpaceTransformForPaint:paint];
 
     CGPoint origin = CGPointZero;
-    [self computeCellSize:&_cellSize viewBox:&_viewBox origin:&origin];
+    CGSize cellSize = CGSizeZero;
+    CGRect viewBox = CGRectZero;
+    [self computeCellSize:&cellSize viewBox:&viewBox origin:&origin];
 
     // transform the X and Y shift
     // Place the tile in user space before moving into the local space of the
@@ -123,7 +161,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     // parent paint
     transform = CGAffineTransformConcat(transform, [IJSVGPaint userSpaceTransformForPaint:self]);
 
-    if (_cellSize.width <= 0.f || _cellSize.height <= 0.f || !isfinite(_cellSize.width) || !isfinite(_cellSize.height)) {
+    if (cellSize.width <= 0.f || cellSize.height <= 0.f || !isfinite(cellSize.width) || !isfinite(cellSize.height)) {
         return;
     }
 
@@ -135,17 +173,19 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGFloat determinant = linear.a * linear.d - linear.b * linear.c;
     if (determinant != 0.f) {
         CGPoint phase = CGPointApplyAffineTransform(CGPointMake(transform.tx, transform.ty), CGAffineTransformInvert(linear));
-        phase.x = fmod(phase.x, _cellSize.width);
-        phase.y = fmod(phase.y, _cellSize.height);
+        phase.x = fmod(phase.x, cellSize.width);
+        phase.y = fmod(phase.y, cellSize.height);
         phase = CGPointApplyAffineTransform(phase, linear);
         transform.tx = phase.x;
         transform.ty = phase.y;
     }
+    CGAffineTransform pixelTransform = CGAffineTransformConcat(transform, [IJSVGFilterPaint pixelTransformForContext:ctx]);
     transform = CGAffineTransformConcat(transform, CGContextGetCTM(ctx));
 
     // create the pattern
     CGRect selfBounds = IJSVGPaintGetBoundingBoxBounds(self);
-    CGPatternRef ref = CGPatternCreate((void*)CFBridgingRetain(self), CGRectMake(0.f, 0.f, _cellSize.width, _cellSize.height), transform, _cellSize.width, _cellSize.height, kCGPatternTilingConstantSpacing, true, &callbacks);
+    IJSVGPatternDrawingInfo* drawingInfo = [[IJSVGPatternDrawingInfo alloc] initWithPaint:self cellSize:cellSize viewBox:viewBox pixelTransform:pixelTransform];
+    CGPatternRef ref = CGPatternCreate((void*)CFBridgingRetain(drawingInfo), CGRectMake(0.f, 0.f, cellSize.width, cellSize.height), transform, cellSize.width, cellSize.height, kCGPatternTilingConstantSpacing, true, &callbacks);
 
     // set the pattern then release it
     CGFloat alpha = 1.f;
@@ -161,6 +201,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGImageRelease(_cachedImage);
 }
 
+/// Sizes intermediate pattern images using the effective destination scale.
 - (void)drawInContext:(CGContextRef)ctx
 {
     // Intermediate filter bitmaps require materialized pattern cells.
@@ -177,7 +218,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGFloat scale = MAX(self.backingScaleFactor, 1.f);
     {
         // Match the bitmap to the current size in screen pixels.
-        CGAffineTransform transform = CGContextGetUserSpaceToDeviceSpaceTransform(ctx);
+        CGAffineTransform transform = [IJSVGFilterPaint pixelTransformForContext:ctx];
         scale = MAX(scale, MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d)));
     }
     scale = MIN(scale, 4096.f / MAX(bounds.size.width, bounds.size.height));

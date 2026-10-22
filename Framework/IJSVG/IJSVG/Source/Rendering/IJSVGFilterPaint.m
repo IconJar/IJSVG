@@ -695,6 +695,12 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
 @synthesize cachesRenderedOutput = _cachesRenderedOutput;
 
+/// Shares the destination mapping with pattern callbacks and intermediate surfaces.
++ (CGAffineTransform)pixelTransformForContext:(CGContextRef)context
+{
+    return IJSVGFilterPixelTransform(context);
+}
+
 + (void)drawInContext:(CGContextRef)context pixelTransform:(CGAffineTransform)pixelTransform drawingBlock:(void (^)(void))drawingBlock
 {
     CGContextRef previousContext = IJSVGFilterDestinationContext;

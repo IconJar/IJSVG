@@ -35,6 +35,9 @@
 + (void)drawBackgroundForPaint:(IJSVGPaint*)paint context:(CGContextRef)context drawingBlock:(void (^)(CGContextRef))drawingBlock;
 + (BOOL)shouldRenderPaintDuringCollection:(IJSVGPaint*)paint;
 
+/// Returns the effective destination mapping for nested drawing operations.
++ (CGAffineTransform)pixelTransformForContext:(CGContextRef)context;
+
 // Pass the destination pixel mapping through the complete drawing operation.
 + (void)drawInContext:(CGContextRef)context pixelTransform:(CGAffineTransform)pixelTransform drawingBlock:(void (^)(void))drawingBlock;
 
