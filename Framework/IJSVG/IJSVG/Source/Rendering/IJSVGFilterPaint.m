@@ -30,6 +30,11 @@ static _Thread_local BOOL IJSVGAlphaOcclusionPlanning;
 static _Thread_local NSMutableSet* __unsafe_unretained IJSVGAlphaOccludedPaints;
 static _Thread_local NSMutableSet* __unsafe_unretained IJSVGAlphaVisitedPaints;
 
+BOOL IJSVGFilterIsPlanningAlphaOcclusionInContext(CGContextRef context)
+{
+    return IJSVGAlphaOcclusionPlanning && context == IJSVGAlphaOcclusionContext;
+}
+
 static BOOL IJSVGAlphaOcclusionEligible(IJSVGPaint* paint)
 {
     // A transparency layer has its own pixels, even when the CGContext pointer

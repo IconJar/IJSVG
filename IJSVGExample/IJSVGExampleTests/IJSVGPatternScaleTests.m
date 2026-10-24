@@ -1,3 +1,11 @@
+//
+//  IJSVGPatternScaleTests.m
+//  IJSVGExampleTests
+//
+//  Created by Curtis Hard on 22/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <IJSVG/IJSVG.h>
 #import <XCTest/XCTest.h>
 
@@ -97,6 +105,32 @@ static NSString* const IJSVGNestedPatternScaleSource = @"<svg xmlns=\"http://www
             }
             double meanDifference = (double)difference / samples;
             XCTAssertLessThan(meanDifference, 2., @"Nested pattern loses detail at size %@: %f", sizeValue, meanDifference);
+        }
+    }
+}
+
+- (void)testSharedPatternPlacementMatchesIndependentPatterns
+{
+    for (NSString* units in @[ @"userSpaceOnUse", @"objectBoundingBox" ]) {
+        for (NSString* viewBox in @[ @"", @"viewBox='2 4 12 12'" ]) {
+            NSString* pattern = [NSString stringWithFormat:@"<pattern id='p' x='3' y='5' width='24' height='24' patternUnits='userSpaceOnUse' "
+                                                            "patternContentUnits='%@' %@ patternTransform='rotate(13)' fill='red'>"
+                                                            "<rect x='2' y='4' width='6' height='12'/>"
+                                                            "<g fill='blue' transform='translate(6 0)'><rect x='2' y='4' width='6' height='6'/></g></pattern>",
+                units, viewBox];
+            NSString* body = @"<rect x='4' y='7' width='50' height='100' fill='url(#p)'/>"
+                              "<rect x='65' y='13' width='55' height='80' fill='url(#q)'/>";
+            NSString* format = @"<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><defs>%@</defs>%@</svg>";
+            NSString* shared = [NSString stringWithFormat:format, pattern, [body stringByReplacingOccurrencesOfString:@"url(#q)" withString:@"url(#p)"]];
+            NSString* independent = [NSString stringWithFormat:format, [pattern stringByAppendingString:[pattern stringByReplacingOccurrencesOfString:@"id='p'" withString:@"id='q'"]], body];
+            IJSVG* svg = [[IJSVG alloc] initWithSVGString:shared];
+            for (NSNumber* size in @[ @128, @256, @128 ]) {
+                NSData* actual = [self pixelsForSVG:svg size:size.unsignedIntegerValue];
+                NSData* expected = [self pixelsForSVG:[[IJSVG alloc] initWithSVGString:independent] size:size.unsignedIntegerValue];
+                XCTAssertNotNil(actual);
+                XCTAssertNotNil(expected);
+                XCTAssertEqualObjects(actual, expected, @"%@ %@ at %@", units, viewBox, size);
+            }
         }
     }
 }

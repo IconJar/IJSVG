@@ -1,3 +1,11 @@
+//
+//  IJSVGAlphaOcclusionTests.m
+//  IJSVGExampleTests
+//
+//  Created by Curtis Hard on 22/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <IJSVGFilterTestHelpers.h>
 
 @interface IJSVGAlphaOcclusionTests : XCTestCase
@@ -33,6 +41,44 @@
             }
             XCTAssertTrue([self containsPaintedPixels:actual], @"%@ flipped=%d", attributes, flipped);
             XCTAssertLessThanOrEqual([self maximumDifference:actual other:expected], 1, @"%@ flipped=%d", attributes, flipped);
+        }
+    }
+}
+
+- (void)testGradientCoveragePlanningPreservesPixels
+{
+    NSArray<NSString*>* gradients = @[
+        @"<linearGradient id='g'%@>%@</linearGradient>",
+        @"<radialGradient id='g'%@>%@</radialGradient>"
+    ];
+    NSArray<NSArray<NSString*>*>* attributes = @[
+        @[ @"", @" gradientTransform='rotate(23)' spreadMethod='reflect'", @" x1='0' x2='0'" ],
+        @[ @"", @" fx='35%' fy='40%'", @" fx='150%'", @" fr='20%'" ]
+    ];
+    for (NSUInteger kind = 0; kind < gradients.count; kind++) {
+        for (NSString* geometry in attributes[kind]) {
+            for (NSString* opacity in @[ @"1", @".5" ]) {
+                NSString* stops = [NSString stringWithFormat:@"<stop stop-color='red'/><stop offset='1' stop-color='blue' stop-opacity='%@'/>", opacity];
+                NSString* definition = [NSString stringWithFormat:gradients[kind], geometry, stops];
+                NSString* body = [NSString stringWithFormat:@"<defs>%@</defs><g transform='rotate(17 64 64)'>"
+                                                             "<rect x='8.25' y='7.5' width='110' height='49.25' fill='url(#g)'/>"
+                                                             "<rect x='24' y='20' width='16' height='14' fill='blue' filter='url(#blur)'/>"
+                                                             "<rect x='48' y='49' width='20' height='14' fill='blue' filter='url(#blur)'/>"
+                                                             "<rect x='28' y='85' width='24' height='18' fill='blue' filter='url(#blur)'/>"
+                                                             "</g>",
+                    definition];
+                for (NSNumber* orientation in @[ @NO, @YES ]) {
+                    NSData* actual = [self pixelsForDocument:[self documentWithBody:body general:NO] flipped:orientation.boolValue];
+                    NSData* expected = [self pixelsForDocument:[self documentWithBody:body general:YES] flipped:orientation.boolValue];
+                    XCTAssertNotNil(actual);
+                    XCTAssertNotNil(expected);
+                    if (actual == nil || expected == nil) {
+                        continue;
+                    }
+                    XCTAssertTrue([self containsPaintedPixels:actual]);
+                    XCTAssertLessThanOrEqual([self maximumDifference:actual other:expected], 1, @"%@ flipped=%@", definition, orientation);
+                }
+            }
         }
     }
 }

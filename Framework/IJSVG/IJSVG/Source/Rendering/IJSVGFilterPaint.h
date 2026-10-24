@@ -10,6 +10,9 @@
 #import <IJSVG/IJSVGRendering.h>
 #import <IJSVGGroupPaint.h>
 
+// True only during alpha coverage planning.
+FOUNDATION_EXPORT BOOL IJSVGFilterIsPlanningAlphaOcclusionInContext(CGContextRef context);
+
 @class IJSVGFilterMetadata;
 
 @interface IJSVGFilterPaint : IJSVGGroupPaint

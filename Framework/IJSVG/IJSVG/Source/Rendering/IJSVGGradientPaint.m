@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGRadialGradient.h>
+#import <IJSVGFilterPaint.h>
 #import <IJSVGGradientPaint.h>
 #import <IJSVGRootPaint.h>
 
@@ -124,6 +125,38 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
     NSUInteger count = _resolvedGradientTransforms.length / sizeof(CGAffineTransform);
     for (NSUInteger index = 0; index < count; index++) {
         CGContextConcatCTM(ctx, matrices[index]);
+    }
+
+    // The planning bitmap is discarded before drawing the actual source.
+    // Replace only gradients that cover the whole clip with opaque alpha.
+    // In particular, focal radial gradients outside the end circle leave holes.
+    if (IJSVGFilterIsPlanningAlphaOcclusionInContext(ctx)) {
+        BOOL coversClip = _gradientKind == IJSVGResolvedGradientKindLinear
+            ? !CGPointEqualToPoint(_startPoint, _endPoint)
+            : _startRadius == 0.f && _endRadius > 0.f && hypot(_startPoint.x - _endPoint.x, _startPoint.y - _endPoint.y) < _endRadius;
+        BOOL opaque = coversClip && _gradient.colors.count != 0;
+        for (id color in _gradient.colors) {
+            if (CGColorGetAlpha((__bridge CGColorRef)color) != 1.f) {
+                opaque = NO;
+                break;
+            }
+        }
+        CGAffineTransform transform = CGContextGetCTM(ctx);
+        CGRect clip = CGContextGetClipBoundingBox(ctx);
+        CGFloat determinant = transform.a * transform.d - transform.b * transform.c;
+        if (opaque && isfinite(determinant) && determinant != 0.f
+            && isfinite(clip.origin.x) && isfinite(clip.origin.y)
+            && isfinite(clip.size.width) && isfinite(clip.size.height)
+            && isfinite(_startPoint.x) && isfinite(_startPoint.y)
+            && isfinite(_endPoint.x) && isfinite(_endPoint.y)
+            && isfinite(_endRadius)) {
+            CGContextSetRGBFillColor(ctx, 1.f, 1.f, 1.f, 1.f);
+            CGContextFillRect(ctx, clip);
+            if (_gradientKind == IJSVGResolvedGradientKindRadial) {
+                CGContextRestoreGState(ctx);
+            }
+            return;
+        }
     }
     if ([_gradient drawSpreadInContext:ctx startPoint:_startPoint endPoint:_endPoint startRadius:_startRadius endRadius:_endRadius radial:_gradientKind == IJSVGResolvedGradientKindRadial]) {
         if (_gradientKind == IJSVGResolvedGradientKindRadial) {

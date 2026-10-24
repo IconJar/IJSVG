@@ -2566,21 +2566,24 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
     patternPaint.viewPort = viewport;
 
-    // Placement belongs to the tile, never to the artwork inside that tile.
-    pattern = [pattern copy];
-    pattern.transforms = @[];
-    pattern.x = IJSVGZeroUnitLength;
-    pattern.y = IJSVGZeroUnitLength;
+    // A viewBox overrides content units. Keep a detached tree only when that
+    // changes inherited units. Otherwise reuse the original children.
     if (pattern.viewBox != nil && !pattern.viewBox.isZeroRect) {
         unitBounds = [pattern.viewBox computeValue:paint.boundingBox.size];
         viewport = unitBounds;
-        pattern.contentUnits = IJSVGUnitUserSpaceOnUse;
+        if (pattern.contentUnits != IJSVGUnitUserSpaceOnUse) {
+            pattern = [pattern copy];
+            pattern.contentUnits = IJSVGUnitUserSpaceOnUse;
+        }
     }
     __block IJSVGPaint* patternFill = nil;
     [self withViewPort:viewport
             unitBounds:unitBounds
                handler:^{
-                   patternFill = [self drawablePaintForNode:pattern];
+                   // Placement belongs to the tile. Build its group and effects
+                   // without applying the pattern x, y, or patternTransform.
+                   patternFill = [self drawablePaintForGroupNode:pattern];
+                   patternFill = [self applyEffectsToPaint:patternFill fromNode:pattern];
                }];
     patternFill.referencingPaint = patternPaint;
     patternPaint.pattern = patternFill;
