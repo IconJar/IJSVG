@@ -415,41 +415,58 @@ static BOOL IJSVGFilterRenderCIEntries(NSArray<IJSVGQuartzFilterBatchEntry*>* en
     return YES;
 }
 
+/// Renders collected shadow, blur and Core Image entries, overlapping their GPU
+/// round trips.
 static BOOL IJSVGFilterRenderCollectedEntries(NSArray<IJSVGQuartzFilterBatchEntry*>* entries)
 {
-    NSMutableArray<IJSVGQuartzFilterBatchEntry*>* metalEntries = [[NSMutableArray alloc] init];
+    NSMutableArray<IJSVGQuartzFilterBatchEntry*>* shadowEntries = [[NSMutableArray alloc] init];
+    NSMutableArray<IJSVGQuartzFilterBatchEntry*>* blurEntries = [[NSMutableArray alloc] init];
     NSMutableArray<IJSVGQuartzFilterBatchEntry*>* ciEntries = [[NSMutableArray alloc] init];
     for (IJSVGQuartzFilterBatchEntry* entry in entries) {
-        if (entry.metalShadow != nil || entry.metalBlur != nil) {
-            [metalEntries addObject:entry];
+        if (entry.metalShadow != nil) {
+            [shadowEntries addObject:entry];
+        } else if (entry.metalBlur != nil) {
+            [blurEntries addObject:entry];
         } else if (entry.output != nil) {
             [ciEntries addObject:entry];
         }
     }
-    if (ciEntries.count == 0 || metalEntries.count == 0) {
-        return IJSVGFilterRenderShadowEntries(metalEntries) && IJSVGFilterRenderBlurEntries(metalEntries) && IJSVGFilterRenderCIEntries(ciEntries);
-    }
 
-    // Jobs own their input pixels and the two arrays contain disjoint entries.
-    // Submit the direct Metal work while Core Image prepares/renders its graph,
-    // then join before Quartz replays any image. Keep shadow and blur leases
-    // sequential so their scratch buffers do not overlap.
+    // Jobs own their input pixels and each list contains disjoint entries.
+    // Shadows and blurs use separate queues and buffer pools, so every kind can
+    // wait on the GPU together. Core Image stays on the calling thread.
+    if (shadowEntries.count == 0 && blurEntries.count == 0) {
+        return IJSVGFilterRenderCIEntries(ciEntries);
+    }
+    if (ciEntries.count == 0 && (shadowEntries.count == 0 || blurEntries.count == 0)) {
+        return shadowEntries.count != 0 ? IJSVGFilterRenderShadowEntries(shadowEntries) : IJSVGFilterRenderBlurEntries(blurEntries);
+    }
     dispatch_group_t group = dispatch_group_create();
-    __block BOOL metalSucceeded = NO;
-    dispatch_group_async(group, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        @autoreleasepool {
-            metalSucceeded = IJSVGFilterRenderShadowEntries(metalEntries) && IJSVGFilterRenderBlurEntries(metalEntries);
-        }
-    });
-    BOOL ciSucceeded = NO;
+    dispatch_queue_t queue = dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0);
+    __block BOOL shadowSucceeded = YES;
+    __block BOOL blurSucceeded = YES;
+    if (shadowEntries.count != 0) {
+        dispatch_group_async(group, queue, ^{
+            @autoreleasepool {
+                shadowSucceeded = IJSVGFilterRenderShadowEntries(shadowEntries);
+            }
+        });
+    }
+    if (blurEntries.count != 0 && ciEntries.count != 0) {
+        dispatch_group_async(group, queue, ^{
+            @autoreleasepool {
+                blurSucceeded = IJSVGFilterRenderBlurEntries(blurEntries);
+            }
+        });
+    }
+    BOOL foregroundSucceeded = NO;
     @try {
-        ciSucceeded = IJSVGFilterRenderCIEntries(ciEntries);
+        foregroundSucceeded = ciEntries.count != 0 ? IJSVGFilterRenderCIEntries(ciEntries) : IJSVGFilterRenderBlurEntries(blurEntries);
     } @finally {
-        // A failed Core Image render must not leave work running after the
-        // synchronous draw releases its batch and source images.
+        // Join before reading worker results or releasing source images.
         dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
     }
-    return metalSucceeded && ciSucceeded;
+    return shadowSucceeded && blurSucceeded && foregroundSucceeded;
 }
 
 static CGContextRef IJSVGFilterNewCollectionContext(CGContextRef context)
@@ -682,6 +699,8 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     BOOL _cachedUsesBackground;
     BOOL _hasFilterRegion;
     CGRect _filterRegion;
+    BOOL _checkedSupersampling;
+    BOOL _cachedRequiresSupersampling;
 }
 
 @end
@@ -853,6 +872,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     _filterMetadata = nil;
     _hasFilterRegion = NO;
     _checkedBackground = NO;
+    _checkedSupersampling = NO;
 }
 
 - (BOOL)resolveUsesBackground
@@ -884,6 +904,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     _cachesRenderedOutput = cachesRenderedOutput;
     _hasFilterRegion = NO;
     _checkedBackground = NO;
+    _checkedSupersampling = NO;
     _filterMetadata = nil;
     if (_outputCacheKey != nil) {
         [IJSVGFilterOutputCache() removeObjectForKey:_outputCacheKey];
@@ -1152,9 +1173,23 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return CGRectInfinite;
 }
 
+/// Resolves supersampling once for renderer owned immutable paint graphs.
 - (BOOL)requiresFilterSupersampling
 {
-    if (self.filter.requiresSupersampling) {
+    if (!self.cachesRenderedOutput) {
+        return [self resolveRequiresFilterSupersampling];
+    }
+    if (!_checkedSupersampling) {
+        _cachedRequiresSupersampling = [self resolveRequiresFilterSupersampling];
+        _checkedSupersampling = YES;
+    }
+    return _cachedRequiresSupersampling;
+}
+
+/// Checks this filter and every nested filter for extra coverage samples.
+- (BOOL)resolveRequiresFilterSupersampling
+{
+    if (self.cachesRenderedOutput ? self.filterMetadata.requiresSupersampling : self.filter.requiresSupersampling) {
         return YES;
     }
 

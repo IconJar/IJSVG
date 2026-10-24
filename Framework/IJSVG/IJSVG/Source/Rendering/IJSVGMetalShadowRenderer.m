@@ -201,10 +201,8 @@ static BOOL IJSVGPrepareMetalShadows(void)
         BOOL success = YES;
         for (IJSVGMetalShadowJob* job in jobs) {
             NSUInteger width = job.parameters.geometry.x, height = job.parameters.geometry.y;
-            NSData* pixels = [NSData dataWithBytes:output + offset * 4 length:width * height * 4];
-            CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)pixels);
-            CGImageRef image = CGImageCreate(width, height, 8, 32, width * 4, space, kCGImageAlphaPremultipliedLast, provider, NULL, false, kCGRenderingIntentDefault);
-            CGDataProviderRelease(provider);
+
+            CGImageRef image = IJSVGFilterCreateImageFromRGBA(output + offset * 4, width, height, space);
             if (job.renderedImage != NULL) {
                 CGImageRelease(job.renderedImage);
             }

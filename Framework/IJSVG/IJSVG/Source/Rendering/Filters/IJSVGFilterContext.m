@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <Accelerate/Accelerate.h>
 #import <IJSVGFilterContext.h>
 #import <simd/simd.h>
 
@@ -19,6 +20,40 @@ NSString* IJSVGFilterShaderSource(NSString* name)
 #endif
     NSURL* sourceURL = [bundle URLForResource:name withExtension:@"metal"];
     return sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL encoding:NSUTF8StringEncoding error:NULL] : nil;
+}
+
+static void IJSVGFilterReleaseImagePixels(void* info, const void* data, size_t size)
+{
+    free((void*)data);
+}
+
+// Copies tightly packed premultiplied RGBA bytes into an independently owned
+// BGRA image, matching native Quartz bitmap destinations.
+CGImageRef IJSVGFilterCreateImageFromRGBA(const uint8_t* bytes, size_t width, size_t height, CGColorSpaceRef colorSpace)
+{
+    if (bytes == NULL || colorSpace == NULL || width == 0 || height == 0 || width > SIZE_MAX / 4 || height > SIZE_MAX / (width * 4)) {
+        return NULL;
+    }
+    size_t rowBytes = width * 4;
+    void* pixels = malloc(rowBytes * height);
+    if (pixels == NULL) {
+        return NULL;
+    }
+    vImage_Buffer source = { (void*)bytes, height, width, rowBytes };
+    vImage_Buffer destination = { pixels, height, width, rowBytes };
+    const uint8_t order[4] = { 2, 1, 0, 3 };
+    if (vImagePermuteChannels_ARGB8888(&source, &destination, order, kvImageNoFlags) != kvImageNoError) {
+        free(pixels);
+        return NULL;
+    }
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, pixels, rowBytes * height, IJSVGFilterReleaseImagePixels);
+    if (provider == NULL) {
+        free(pixels);
+        return NULL;
+    }
+    CGImageRef image = CGImageCreate(width, height, 8, 32, rowBytes, colorSpace, (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little, provider, NULL, false, kCGRenderingIntentDefault);
+    CGDataProviderRelease(provider);
+    return image;
 }
 
 float IJSVGFilterClamp(double value)

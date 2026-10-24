@@ -466,6 +466,7 @@ static BOOL IJSVGSelectorLanguageMatches(const char* language, const char* range
 @property (nonatomic, copy) NSArray<IJSVGStyleSheetSelector*>* parentSelectors;
 @property (nonatomic, strong) NSArray<IJSVGStyleSheetSelectorRaw*>* matchSelectors;
 @property (nonatomic, copy) NSDictionary<NSString*, NSString*>* namespaces;
+@property (nonatomic) BOOL matchesAnyNode;
 - (instancetype)initWithString:(NSString*)string depth:(NSUInteger)depth insideHas:(BOOL)insideHas relative:(BOOL)relative namespaces:(NSDictionary*)namespaces parentSelectors:(NSArray<IJSVGStyleSheetSelector*>*)parentSelectors;
 - (BOOL)compileAtDepth:(NSUInteger)depth insideHas:(BOOL)insideHas;
 - (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node scope:(id<IJSVGStyleSheetSelectorNode>)scope;
@@ -879,6 +880,13 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
             matches[index] = replacement;
         }
         _matchSelectors = matches ?: _rawSelectors;
+
+        // A lone universal compound without constraints matches every node.
+        // Matplotlib applies such a rule to each element of large documents.
+        IJSVGStyleSheetSelectorRaw* only = _matchSelectors.count == 1 ? _matchSelectors.firstObject : nil;
+        _matchesAnyNode = !_relative && _rawSelectors.count == 1 && only != nil && only.namespaceURI == nil
+            && only.tag == nil && only.identifier == nil && only.identifiers.count == 0 && only.classes.count == 0
+            && only.attributes.count == 0 && only.rootCount == 0 && only.nestingCount == 0 && only.pseudoClasses.count == 0;
     }
     return self;
 }
@@ -1126,6 +1134,10 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
 // must not hide a farther ancestor that satisfies the rest of the selector.
 - (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node atIndex:(NSUInteger)index scope:(id<IJSVGStyleSheetSelectorNode>)scope anchor:(id<IJSVGStyleSheetSelectorNode>)anchor
 {
+    if (_matchesAnyNode) {
+        return node != nil;
+    }
+
     // The implicit anchor of a relative selector is distinct from CSS :scope.
     if (_relative && index + 1 == _rawSelectors.count) {
         return node == anchor;

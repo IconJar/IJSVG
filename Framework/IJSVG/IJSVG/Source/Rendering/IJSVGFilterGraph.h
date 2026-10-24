@@ -25,6 +25,11 @@ typedef NS_OPTIONS(NSUInteger, IJSVGFilterInputs) {
 @property (nonatomic, copy, readonly) NSArray<IJSVGFilterPrimitive*>* primitives;
 @property (nonatomic, readonly) IJSVGFilterInputs inputs;
 @property (nonatomic, readonly) BOOL usesBackdropAddition;
+
+// Structural recognisers evaluated once for the captured primitives.
+@property (nonatomic, readonly) BOOL preservesInnerShadowCoverage;
+@property (nonatomic, readonly) BOOL requiresSupersampling;
+@property (nonatomic, readonly) BOOL supportsDirectDropShadow;
 - (instancetype)initWithFilter:(IJSVGFilter*)filter;
 @end
 
@@ -38,6 +43,7 @@ CGRect IJSVGFilterRegionForNode(IJSVGGraphicsNode* node, IJSVGUnitType units, CG
 @property (nonatomic, strong) IJSVGFilterMetadata* resolvedMetadata;
 @property (nonatomic, readonly) NSArray<IJSVGFilterPrimitive*>* filterPrimitives;
 @property (nonatomic, readonly) IJSVGFilterInputs filterInputs;
+@property (nonatomic, readonly) BOOL preservesInnerShadowCoverage;
 @property (nonatomic, copy) IJSVGRenderingOptions* renderingOptions;
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, assign) CGRect viewPort;

@@ -46,6 +46,9 @@
 // Load Metal source from the framework. Return nil if it cannot be read.
 NSString* IJSVGFilterShaderSource(NSString* name);
 
+// Returns an owned BGRA image copied from tightly packed premultiplied RGBA bytes.
+CGImageRef IJSVGFilterCreateImageFromRGBA(const uint8_t* bytes, size_t width, size_t height, CGColorSpaceRef colorSpace) CF_RETURNS_RETAINED;
+
 void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(NSInteger, NSInteger));
 
 float IJSVGFilterClamp(double value);

@@ -608,6 +608,71 @@ static void IJSVGTestParseGradientAttributes(NSXMLElement* element, IJSVGGradien
     XCTAssertTrue(((IJSVGColorNode*)group.stroke).isNoneOrTransparent);
 }
 
+- (void)testPlainPrimitiveCachePreservesInheritanceAndIndependentMutation
+{
+    NSString* body = @"<defs>"
+                      "<filter id='a' color-interpolation-filters='sRGB'>"
+                      "<feOffset in='SourceGraphic' dx='1' dy='2' result='shift'/></filter>"
+                      "<filter id='b' color-interpolation-filters='linearRGB'>"
+                      "<feOffset in='SourceGraphic' dx='1' dy='2' result='shift'/></filter>"
+                      "</defs><rect width='10' height='10' filter='url(#a)'/>"
+                      "<rect x='20' width='10' height='10' filter='url(#b)'/>";
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body) fileURL:nil error:nil];
+    XCTAssertNotNil(parser);
+    IJSVGFilterPrimitive* previous = nil;
+    for (NSUInteger iteration = 0; iteration < 2; iteration++) {
+        IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+        XCTAssertEqual(root.children.count, 2);
+        if (root.children.count != 2) {
+            return;
+        }
+        IJSVGFilterPrimitive* first = ((IJSVGGraphicsNode*)root.children[0]).filters.firstObject.primitives.firstObject;
+        IJSVGFilterPrimitive* second = ((IJSVGGraphicsNode*)root.children[1]).filters.firstObject.primitives.firstObject;
+        XCTAssertNotNil(first);
+        XCTAssertNotNil(second);
+        XCTAssertNotEqual(first, second);
+        XCTAssertNotEqual(first, previous);
+        XCTAssertEqual(first.resolvedFilterColorInterpolation, IJSVGColorInterpolationSRGB);
+        XCTAssertEqual(second.resolvedFilterColorInterpolation, IJSVGColorInterpolationLinearRGB);
+        for (IJSVGFilterPrimitive* primitive in @[ first, second ]) {
+            XCTAssertEqualObjects(primitive.parameters[@"dx"], @"1");
+            XCTAssertEqualObjects(primitive.input, @"SourceGraphic");
+            XCTAssertEqualObjects(primitive.result, @"shift");
+        }
+        first.parameters = @{ @"dx" : @"99" };
+        first.input = @"SourceAlpha";
+        first.result = @"changed";
+        XCTAssertEqualObjects(second.parameters[@"dx"], @"1");
+        XCTAssertEqualObjects(second.input, @"SourceGraphic");
+        XCTAssertEqualObjects(second.result, @"shift");
+        previous = first;
+    }
+}
+
+- (void)testPlainPrimitiveCachesRemainIndependentAcrossDocuments
+{
+    NSMutableArray<IJSVGFilterPrimitive*>* primitives = [[NSMutableArray alloc] init];
+    for (NSString* interpolation in @[ @"sRGB", @"linearRGB" ]) {
+        NSString* body = [NSString stringWithFormat:@"<defs><filter id='f' color-interpolation-filters='%@'>"
+                                                     "<feOffset dx='1'/><feOffset dx='1'/></filter></defs>"
+                                                     "<rect width='10' height='10' filter='url(#f)'/>",
+            interpolation];
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body) fileURL:nil error:nil];
+        IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+        IJSVGFilter* filter = ((IJSVGGraphicsNode*)root.children.firstObject).filters.firstObject;
+        XCTAssertEqual(filter.primitives.count, 2);
+        if (filter.primitives.count != 2) {
+            return;
+        }
+        XCTAssertEqual(filter.primitives.firstObject.resolvedFilterColorInterpolation, filter.primitives.lastObject.resolvedFilterColorInterpolation);
+        [primitives addObject:filter.primitives.lastObject];
+    }
+    XCTAssertEqual(primitives[0].resolvedFilterColorInterpolation, IJSVGColorInterpolationSRGB);
+    XCTAssertEqual(primitives[1].resolvedFilterColorInterpolation, IJSVGColorInterpolationLinearRGB);
+    primitives[0].parameters = @{ @"dx" : @"77" };
+    XCTAssertEqualObjects(primitives[1].parameters[@"dx"], @"1");
+}
+
 - (void)testRepeatedFilterAttributesRefreshWhenStylesChange
 {
     NSString* shape = @"<rect width='10' height='10' filter='url(#f)'/>";

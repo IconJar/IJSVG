@@ -1,36 +1,35 @@
 #import <IJSVG/IJSVG.h>
 #import <XCTest/XCTest.h>
 
-static NSString* const IJSVGNestedPatternScaleSource =
-    @"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"768\" height=\"768\" viewBox=\"0 0 32 32\">\n"
-    "  <title>Nested pattern filter resolution reproduction</title>\n"
-    "  <desc>A fine pattern is blurred inside a larger pattern and then drawn through a shadow filter. The small viewBox is enlarged 24 times. The fine shapes should remain distinct.</desc>\n"
-    "  <defs>\n"
-    "    <pattern id=\"flakes\" width=\"2\" height=\"2\" patternUnits=\"userSpaceOnUse\">\n"
-    "      <rect width=\"2\" height=\"2\" fill=\"#a4a8ad\"/>\n"
-    "      <path d=\"M.1 .15 L.55 .08 L.7 .45 L.28 .65 Z\" fill=\"#c3ffff\"/>\n"
-    "      <path d=\"M1.15 .12 L1.65 .2 L1.82 .58 L1.4 .75 L1.08 .48 Z\" fill=\"#ffffc0\"/>\n"
-    "      <path d=\"M.18 1.15 L.62 1 L.8 1.4 L.42 1.8 L.08 1.55 Z\" fill=\"#ffc4f2\"/>\n"
-    "      <path d=\"M1.12 1.2 L1.62 1.03 L1.88 1.52 L1.45 1.85 Z\" fill=\"#fff\"/>\n"
-    "    </pattern>\n"
-    "    <filter id=\"soften\" x=\"0\" y=\"0\" width=\"32\" height=\"32\"\n"
-    "            filterUnits=\"userSpaceOnUse\" primitiveUnits=\"userSpaceOnUse\"\n"
-    "            color-interpolation-filters=\"sRGB\">\n"
-    "      <feGaussianBlur in=\"SourceGraphic\" stdDeviation=\".02\"/>\n"
-    "    </filter>\n"
-    "    <pattern id=\"surface\" x=\"0\" y=\"0\" width=\"32\" height=\"32\"\n"
-    "             patternUnits=\"userSpaceOnUse\" viewBox=\"0 0 32 32\">\n"
-    "      <rect width=\"32\" height=\"32\" fill=\"url(#flakes)\" filter=\"url(#soften)\"/>\n"
-    "    </pattern>\n"
-    "    <filter id=\"shadow\" x=\"0\" y=\"0\" width=\"32\" height=\"32\"\n"
-    "            filterUnits=\"userSpaceOnUse\" primitiveUnits=\"userSpaceOnUse\">\n"
-    "      <feDropShadow dx=\"0\" dy=\".35\" stdDeviation=\".3\" flood-opacity=\".3\"/>\n"
-    "    </filter>\n"
-    "  </defs>\n"
-    "  <rect width=\"32\" height=\"32\" fill=\"white\"/>\n"
-    "  <rect x=\"2\" y=\"2\" width=\"28\" height=\"28\" rx=\"2\"\n"
-    "        fill=\"url(#surface)\" filter=\"url(#shadow)\"/>\n"
-    "</svg>\n";
+static NSString* const IJSVGNestedPatternScaleSource = @"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"768\" height=\"768\" viewBox=\"0 0 32 32\">\n"
+                                                        "  <title>Nested pattern filter resolution reproduction</title>\n"
+                                                        "  <desc>A fine pattern is blurred inside a larger pattern and then drawn through a shadow filter. The small viewBox is enlarged 24 times. The fine shapes should remain distinct.</desc>\n"
+                                                        "  <defs>\n"
+                                                        "    <pattern id=\"flakes\" width=\"2\" height=\"2\" patternUnits=\"userSpaceOnUse\">\n"
+                                                        "      <rect width=\"2\" height=\"2\" fill=\"#a4a8ad\"/>\n"
+                                                        "      <path d=\"M.1 .15 L.55 .08 L.7 .45 L.28 .65 Z\" fill=\"#c3ffff\"/>\n"
+                                                        "      <path d=\"M1.15 .12 L1.65 .2 L1.82 .58 L1.4 .75 L1.08 .48 Z\" fill=\"#ffffc0\"/>\n"
+                                                        "      <path d=\"M.18 1.15 L.62 1 L.8 1.4 L.42 1.8 L.08 1.55 Z\" fill=\"#ffc4f2\"/>\n"
+                                                        "      <path d=\"M1.12 1.2 L1.62 1.03 L1.88 1.52 L1.45 1.85 Z\" fill=\"#fff\"/>\n"
+                                                        "    </pattern>\n"
+                                                        "    <filter id=\"soften\" x=\"0\" y=\"0\" width=\"32\" height=\"32\"\n"
+                                                        "            filterUnits=\"userSpaceOnUse\" primitiveUnits=\"userSpaceOnUse\"\n"
+                                                        "            color-interpolation-filters=\"sRGB\">\n"
+                                                        "      <feGaussianBlur in=\"SourceGraphic\" stdDeviation=\".02\"/>\n"
+                                                        "    </filter>\n"
+                                                        "    <pattern id=\"surface\" x=\"0\" y=\"0\" width=\"32\" height=\"32\"\n"
+                                                        "             patternUnits=\"userSpaceOnUse\" viewBox=\"0 0 32 32\">\n"
+                                                        "      <rect width=\"32\" height=\"32\" fill=\"url(#flakes)\" filter=\"url(#soften)\"/>\n"
+                                                        "    </pattern>\n"
+                                                        "    <filter id=\"shadow\" x=\"0\" y=\"0\" width=\"32\" height=\"32\"\n"
+                                                        "            filterUnits=\"userSpaceOnUse\" primitiveUnits=\"userSpaceOnUse\">\n"
+                                                        "      <feDropShadow dx=\"0\" dy=\".35\" stdDeviation=\".3\" flood-opacity=\".3\"/>\n"
+                                                        "    </filter>\n"
+                                                        "  </defs>\n"
+                                                        "  <rect width=\"32\" height=\"32\" fill=\"white\"/>\n"
+                                                        "  <rect x=\"2\" y=\"2\" width=\"28\" height=\"28\" rx=\"2\"\n"
+                                                        "        fill=\"url(#surface)\" filter=\"url(#shadow)\"/>\n"
+                                                        "</svg>\n";
 
 @interface IJSVGPatternScaleTests : XCTestCase
 @end
@@ -67,10 +66,11 @@ static NSString* const IJSVGNestedPatternScaleSource =
         source = [source stringByReplacingOccurrencesOfString:@"<rect width=\"32\" height=\"32\" fill=\"url(#flakes)\" filter=\"url(#soften)\"/>"
                                                    withString:@"<g transform=\"translate(5 7)\"><rect width=\"32\" height=\"32\" fill=\"url(#flakes)\" filter=\"url(#soften)\"/></g>"];
     }
+
     // Compare against the equivalent interior without the outer pattern callback.
     // Ignore the perimeter where filter clipping differs.
     NSString* referenceSource = [IJSVGNestedPatternScaleSource stringByReplacingOccurrencesOfString:@"fill=\"url(#surface)\" filter=\"url(#shadow)\"/>"
-                                                                                      withString:@"fill=\"url(#flakes)\" filter=\"url(#soften)\"/>"];
+                                                                                         withString:@"fill=\"url(#flakes)\" filter=\"url(#soften)\"/>"];
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
     for (NSNumber* sizeValue in @[ @384, @768, @1536, @384 ]) {
         @autoreleasepool {

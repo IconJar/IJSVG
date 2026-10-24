@@ -6,11 +6,9 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVGFilterContext.h>
 #import <IJSVGMetalBlurRenderer.h>
 #import <Metal/Metal.h>
-#if SWIFT_PACKAGE
-#import <IJSVGFilterContext.h>
-#endif
 #import <simd/simd.h>
 
 typedef struct {
@@ -258,13 +256,8 @@ static BOOL IJSVGPrepareMetalBlur(void)
         offset = 0;
         for (IJSVGMetalBlurJob* job in jobs) {
             NSUInteger width = job.parameters.geometry.x, height = job.parameters.geometry.y;
-            NSData* pixels = [NSData dataWithBytes:(uint8_t*)slot.buffers[3].contents + offset * 4 length:width * height * 4];
-            CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)pixels);
-            if (provider == NULL) {
-                return NO;
-            }
-            CGImageRef result = CGImageCreate(width, height, 8, 32, width * 4, job.colorSpace, kCGImageAlphaPremultipliedLast, provider, NULL, false, kCGRenderingIntentDefault);
-            CGDataProviderRelease(provider);
+
+            CGImageRef result = IJSVGFilterCreateImageFromRGBA((const uint8_t*)slot.buffers[3].contents + offset * 4, width, height, job.colorSpace);
             if (result == NULL) {
                 return NO;
             }

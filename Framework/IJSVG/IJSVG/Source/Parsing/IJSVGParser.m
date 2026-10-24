@@ -672,6 +672,92 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     return nil;
 }
 
+enum {
+    IJSVGPlainPrimitiveKeyCapacity = 1024
+};
+
+/// Accepts literal values whose meaning cannot depend on CSS or ancestors.
+static BOOL IJSVGPlainPrimitiveValue(IJSVGNodeAttribute identifier, const char* bytes, size_t length)
+{
+    for (size_t index = 0; index < length; index++) {
+        char c = bytes[index];
+        switch (identifier) {
+            case IJSVGNodeAttributeIn:
+            case IJSVGNodeAttributeIn2:
+            case IJSVGNodeAttributeResult:
+                if (c == '(' || c == ';' || c == '\\') {
+                    return NO;
+                }
+                break;
+            case IJSVGNodeAttributeMode:
+            case IJSVGNodeAttributeType:
+            case IJSVGNodeAttributeOperator:
+                if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '-')) {
+                    return NO;
+                }
+                break;
+            default:
+
+                // Numbers only, which excludes keywords such as inherit and
+                // CSS functions such as var().
+                if (!((c >= '0' && c <= '9') || c == '.' || c == '-' || c == '+' || c == 'e' || c == 'E' || c == ',' || c == ' ' || c == '\t' || c == '\n' || c == '\r')) {
+                    return NO;
+                }
+                break;
+        }
+    }
+    return YES;
+}
+
+/// Builds a key from the type and attribute bytes of a childless primitive
+/// whose attributes are all plain literals. Returns NO for any other element.
+static BOOL IJSVGPlainPrimitiveKey(IJSVGXMLNode* element, uint8_t* key, size_t* length)
+{
+    IJSVGNodeType type = IJSVGXMLType(element);
+    if (type == IJSVGNodeTypeFilterImage || element->childCount != 0) {
+        return NO;
+    }
+    size_t cursor = 0;
+    uint32_t header = (uint32_t)type;
+    memcpy(key, &header, sizeof(header));
+    cursor += sizeof(header);
+    IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(element);
+    for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&attributes); attribute != NULL; attribute = IJSVGXMLNextAttribute(&attributes)) {
+        switch (attribute->identifier) {
+            case IJSVGNodeAttributeIn:
+            case IJSVGNodeAttributeIn2:
+            case IJSVGNodeAttributeResult:
+            case IJSVGNodeAttributeMode:
+            case IJSVGNodeAttributeType:
+            case IJSVGNodeAttributeOperator:
+            case IJSVGNodeAttributeValues:
+            case IJSVGNodeAttributeK1:
+            case IJSVGNodeAttributeK2:
+            case IJSVGNodeAttributeK3:
+            case IJSVGNodeAttributeK4:
+            case IJSVGNodeAttributeDX:
+            case IJSVGNodeAttributeDY:
+            case IJSVGNodeAttributeStdDeviation:
+            case IJSVGNodeAttributeFloodOpacity:
+                break;
+            default:
+                return NO;
+        }
+        const char* bytes = IJSVGXMLAttributeBytes(attribute);
+        size_t valueLength = attribute->value.length;
+        uint32_t fields[2] = { (uint32_t)attribute->identifier, (uint32_t)valueLength };
+        if (attribute->prefix != NULL || bytes == NULL || cursor + sizeof(fields) + valueLength > IJSVGPlainPrimitiveKeyCapacity || !IJSVGPlainPrimitiveValue(attribute->identifier, bytes, valueLength)) {
+            return NO;
+        }
+        memcpy(key + cursor, fields, sizeof(fields));
+        cursor += sizeof(fields);
+        memcpy(key + cursor, bytes, valueLength);
+        cursor += valueLength;
+    }
+    *length = cursor;
+    return YES;
+}
+
 @interface IJSVGParser () {
     CFTypeRef* _rawAttributeCache;
     CFTypeRef* _referenceCache;
@@ -681,6 +767,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     BOOL _hasGradientStopStyles;
     IJSVGByteCache* _sharedGradientStops;
     IJSVGByteCache* _plainFilterTemplates;
+    IJSVGByteCache* _plainPrimitiveTemplates;
     BOOL _plainFilterStylesKnown;
     BOOL _hasPlainFilterStyles;
     NSUInteger _plainFilterStyleRuleCount;
@@ -761,6 +848,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGByteCacheDestroy(_sharedGradientStops);
     IJSVGByteCacheDestroy(_plainFilterTemplates);
+    IJSVGByteCacheDestroy(_plainPrimitiveTemplates);
     IJSVGParsedPathCacheDestroy(_parsedPathCache);
     [self clearRawAttributeCache];
     [self clearReferenceCache];
@@ -892,6 +980,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     _sharedGradientStops = NULL;
     IJSVGByteCacheDestroy(_plainFilterTemplates);
     _plainFilterTemplates = NULL;
+    IJSVGByteCacheDestroy(_plainPrimitiveTemplates);
+    _plainPrimitiveTemplates = NULL;
     _plainFilterStylesKnown = NO;
     self.gradientStopStates = nil;
     self.styleAncestors = IJSVGParserElementMapTable();
@@ -929,6 +1019,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     _sharedGradientStops = NULL;
     IJSVGByteCacheDestroy(_plainFilterTemplates);
     _plainFilterTemplates = NULL;
+    IJSVGByteCacheDestroy(_plainPrimitiveTemplates);
+    _plainPrimitiveTemplates = NULL;
     _plainFilterStylesKnown = NO;
     self.gradientStopStates = nil;
     self.selectorScopes = nil;
@@ -1942,6 +2034,24 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     apply([self computeDetachedNodeWithIdentifier:identifier referencingNode:node element:element]);
 }
 
+/// Copies the attribute derived state of a plain primitive for another element.
+- (IJSVGFilterPrimitive*)plainPrimitiveFromTemplate:(IJSVGFilterPrimitive*)source element:(IJSVGXMLNode*)element
+{
+    IJSVGFilterPrimitive* primitive = [[source.class alloc] initWithParameterStateFromPrimitive:source];
+    primitive.type = source.type;
+    IJSVGPreserveElementName(primitive, element);
+    primitive.input = source.input;
+    primitive.input2 = source.input2;
+    primitive.result = source.result;
+
+    // Match the definition parent assigned by the general attribute path.
+    IJSVGGraphicsNode* definitionParent = IJSVGDefinitionParentForElement(_definitionStyleParent, element);
+    if (definitionParent != nil) {
+        primitive.styleParent = definitionParent;
+    }
+    return primitive;
+}
+
 // Cache only context independent composite definitions. Geometry, styles,
 // references and child IDs stay on the normal cascade path.
 - (IJSVGFilter*)plainFilterFromTemplate:(IJSVGFilter*)source
@@ -2887,9 +2997,22 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     return filters;
 }
 
+/// Parses a filter primitive, reusing the state of an identical plain element.
 - (IJSVGFilterPrimitive*)parseFilterPrimitiveElement:(IJSVGXMLNode*)element parentNode:(IJSVGGroup*)parentNode
 {
     IJSVGNodeType type = IJSVGXMLType(element);
+
+    // Plain primitives depend only on their element type and literal attribute
+    // bytes. Exported filters repeat the same primitives many times.
+    uint8_t key[IJSVGPlainPrimitiveKeyCapacity];
+    size_t keyLength = 0;
+    BOOL plain = _styleSheet.ruleCount == 0 && _attributeInput.element != element && IJSVGPlainPrimitiveKey(element, key, &keyLength);
+    IJSVGFilterPrimitive* template = plain ? (__bridge IJSVGFilterPrimitive*)IJSVGByteCacheGetValue(_plainPrimitiveTemplates, key, keyLength) : nil;
+    if (template != nil) {
+        IJSVGFilterPrimitive* node = [self plainPrimitiveFromTemplate:template element:element];
+        [parentNode addChild:node];
+        return node;
+    }
     IJSVGFilterPrimitive* node = [[IJSVGNodeClassForType(type) alloc] init];
     node.type = type;
     IJSVGPreserveElementName(node, element);
@@ -2898,6 +3021,14 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGNodeDeferredAttributes deferredAttributes = { 0 };
     [self computeAttributesFromElement:element onNode:node ignoredAttributes:nil deferredAttributes:&deferredAttributes];
     IJSVGApplyDeferredAttributes(&deferredAttributes, node, self, element);
+    if (plain && IJSVGByteCacheGetCount(_plainPrimitiveTemplates) < 256) {
+        if (_plainPrimitiveTemplates == NULL) {
+            _plainPrimitiveTemplates = IJSVGByteCacheCreate(256, 256 * 1024);
+        }
+        IJSVGFilterPrimitive* snapshot = [self plainPrimitiveFromTemplate:node element:element];
+        snapshot.styleParent = nil;
+        IJSVGByteCacheSetValue(_plainPrimitiveTemplates, key, keyLength, (__bridge CFTypeRef)snapshot);
+    }
 
     [self parseFilterChildren:element parentNode:node];
     if (node.type == IJSVGNodeTypeFilterImage) {

@@ -367,7 +367,7 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
     if (clippedSource == nil) {
         return NULL;
     }
-    if (self.filter.preservesInnerShadowCoverage) {
+    if (self.preservesInnerShadowCoverage) {
         return CGPathCreateCopy((__bridge CGPathRef)clippedSource);
     }
     if (backgroundIsEmpty && IJSVGFilterSIMDUsesBackdropAddition(self.filter)) {

@@ -74,6 +74,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     @try {
         CGRect rect = CGRectMake(0.f, 0.f, size.width, size.height);
         CGContextClipToRect(ctx, rect);
+
         // Register the mapping before applying the viewBox so both its scale
         // and translation are picked up from subsequent context transforms.
         [IJSVGFilterPaint drawInContext:ctx
