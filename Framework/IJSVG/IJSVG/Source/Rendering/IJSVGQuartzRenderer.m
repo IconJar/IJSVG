@@ -2025,8 +2025,12 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     reference = CGPointApplyAffineTransform(reference, mapping);
     CGAffineTransform transform = [self transformForMarker:marker position:position reference:reference scale:scale];
     CGAffineTransform contentTransform = CGAffineTransformConcat(mapping, transform);
-    marker = [marker copy];
-    [self resolveContextPaintInNode:marker referencingNode:node bounds:contextBounds viewport:bounds transform:contentTransform];
+
+    // Only context paints need a detached tree with resolved instance colours.
+    if ([self nodeNeedsContextPaint:marker]) {
+        marker = [marker copy];
+        [self resolveContextPaintInNode:marker referencingNode:node bounds:contextBounds viewport:bounds transform:contentTransform];
+    }
     IJSVGPaint* content = [self contentPaintForMarker:marker viewBox:viewBox transform:contentTransform recursionKey:key];
     if (content == nil) {
         return nil;

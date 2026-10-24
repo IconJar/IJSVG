@@ -653,6 +653,40 @@ static NSString* const IJSVGMarkerTestTriangle = @"<path d='M0 -2L6 0L0 2Z' fill
     XCTAssertEqualObjects(after, [self pixelsForSVG:expected]);
 }
 
+- (void)testSharedMarkerDefinitionPreservesInheritanceAfterRendering
+{
+    for (NSString* effect in @[ @"", @"filter='url(#f)'" ]) {
+        NSString* document = [NSString stringWithFormat:@"<defs><filter id='f'><feGaussianBlur stdDeviation='.3'/></filter>"
+                                                         "<marker id='m' fill='red' markerUnits='userSpaceOnUse' overflow='visible'>"
+                                                         "<g %@><circle r='4'/></g></marker></defs>"
+                                                         "<path d='M20 20L80 20L80 80' fill='none' stroke='green' marker='url(#m)'/>"
+                                                         "<path d='M20 50L80 50' fill='none' stroke='purple' marker='url(#m)'/>",
+            effect];
+        IJSVG* svg = [self svgWithBody:document];
+        IJSVGGraphicsNode* path = (IJSVGGraphicsNode*)svg.rootNode.children.lastObject;
+        IJSVGMarker* marker = path.markerEnd;
+        IJSVGGroup* group = (IJSVGGroup*)marker.children.firstObject;
+        IJSVGNode* child = group.children.firstObject;
+        XCTAssertNotNil(child);
+        NSData* before = [self pixelsForSVG:svg];
+        XCTAssertEqual(child.parentNode, group);
+        XCTAssertEqual(group.parentNode, marker);
+        XCTAssertEqual(path.markerEnd, marker);
+        IJSVG* expected = [self svgWithBody:[document stringByReplacingOccurrencesOfString:@"fill='red'" withString:@"fill='blue'"]];
+        IJSVGMarker* expectedMarker = ((IJSVGGraphicsNode*)expected.rootNode.children.lastObject).markerEnd;
+        for (IJSVGGraphicsNode* referencingPath in svg.rootNode.children) {
+            referencingPath.markerStart.fill = expectedMarker.fill;
+            referencingPath.markerMid.fill = expectedMarker.fill;
+            referencingPath.markerEnd.fill = expectedMarker.fill;
+        }
+        [svg setNeedsDisplay];
+        NSData* after = [self pixelsForSVG:svg];
+        XCTAssertNotEqualObjects(before, after);
+        XCTAssertEqualObjects(after, [self pixelsForSVG:expected]);
+        [self assertExportsOfSVG:svg matchPixels:after];
+    }
+}
+
 - (void)testMarker3ProjectResource
 {
     NSString* directory = @(__FILE__).stringByDeletingLastPathComponent.stringByDeletingLastPathComponent;
