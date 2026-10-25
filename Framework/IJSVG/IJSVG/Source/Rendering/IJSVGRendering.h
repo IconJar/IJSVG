@@ -11,9 +11,14 @@
 typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)(void);
 
 typedef NS_ENUM(NSInteger, IJSVGRenderQuality) {
-    kIJSVGRenderQualityFullResolution, // slowest to render
-    kIJSVGRenderQualityOptimized, // best of both worlds
-    kIJSVGRenderQualityLow // fast rendering
+    // High image interpolation and full coverage sampling for nested filters.
+    kIJSVGRenderQualityFullResolution,
+
+    // Medium image interpolation and local filter sampling for thumbnails.
+    kIJSVGRenderQualityOptimized,
+
+    // Low image interpolation without additional filter coverage samples.
+    kIJSVGRenderQualityLow
 };
 
 FOUNDATION_EXPORT const CGFloat IJSVGDefaultFontSize;
@@ -22,6 +27,8 @@ FOUNDATION_EXPORT const CGFloat IJSVGDefaultFontSize;
 @interface IJSVGRenderingOptions : NSObject <NSCopying>
 
 @property (nonatomic, assign) BOOL filtersEnabled;
+
+// Defaults to full resolution. Faster modes can change filtered edge pixels.
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) BOOL ignoreIntrinsicSize;
 

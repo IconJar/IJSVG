@@ -33,12 +33,15 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
 
 @interface IJSVGCountingFilterSource : IJSVGPaint
 @property (nonatomic, assign) NSUInteger drawCount;
+@property (nonatomic, assign) CGFloat sampledScale;
 @end
 
 @implementation IJSVGCountingFilterSource
 - (void)drawInContext:(CGContextRef)context
 {
     self.drawCount++;
+    CGAffineTransform transform = CGContextGetCTM(context);
+    self.sampledScale = MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
     CGContextSetRGBFillColor(context, 1, 0, 0, 1);
     CGContextFillRect(context, CGRectMake(8, 8, 16, 16));
 }
@@ -376,6 +379,77 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
         XCTAssertNotNil(expected);
         XCTAssertEqualObjects(actual, expected);
     }
+}
+
+// Nested filters must reuse extra coverage samples rather than multiply them.
+- (void)testNestedFilterQualityBoundsSamplingScale
+{
+    for (NSNumber* value in @[ @(kIJSVGRenderQualityFullResolution), @(kIJSVGRenderQualityOptimized), @(kIJSVGRenderQualityLow) ]) {
+        IJSVGCountingFilterSource* source = [[IJSVGCountingFilterSource alloc] init];
+        source.frame = CGRectMake(0, 0, 32, 32);
+        source.boundingBox = source.outerBoundingBox = source.frame;
+        IJSVGPaint* outer = source;
+        for (NSUInteger level = 0; level < 3; level++) {
+            IJSVGFilterPrimitive* primitive = [[IJSVGFilterPrimitive alloc] init];
+            primitive.type = IJSVGNodeTypeFilterColorMatrix;
+            primitive.parameters = @{ @"type" : @"matrix", @"values" : @"1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 8 0" };
+            IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+            [filter addChild:primitive];
+            outer = [[IJSVGFilterPaint alloc] initWithSourcePaint:outer filter:filter viewPort:source.frame];
+            outer.renderQuality = value.integerValue;
+        }
+        CGContextRef bitmap = NewBitmap(64, kCGColorSpaceSRGB);
+        XCTAssertTrue(bitmap != NULL);
+        if (bitmap == NULL) {
+            return;
+        }
+        [IJSVGFilterPaint renderPaint:outer inBitmapContext:bitmap];
+        XCTAssertGreaterThan(source.drawCount, 0U);
+        XCTAssertEqualWithAccuracy(source.sampledScale, value.integerValue == kIJSVGRenderQualityLow ? 1.f : 2.f, 1e-6);
+        CGContextRelease(bitmap);
+    }
+}
+
+// Switching quality must rebuild filter output while preserving option snapshots.
+- (void)testFilterQualitySwitchingRestoresFullResolution
+{
+    NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>"
+                        "<defs>"
+                        "<filter id='outer' x='-50%' y='-50%' width='200%' height='200%'><feGaussianBlur stdDeviation='.3'/></filter>"
+                        "<filter id='hard' x='-50%' y='-50%' width='200%' height='200%'>"
+                        "<feColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 8 0'/></filter>"
+                        "</defs><g filter='url(#outer)'><g filter='url(#hard)'>"
+                        "<circle cx='18.3' cy='17.7' r='10.2' fill='red' filter='url(#hard)'/>"
+                        "<circle cx='44.7' cy='18.1' r='9.3' fill='blue' filter='url(#hard)'/>"
+                        "<circle cx='30.2' cy='43.6' r='11.4' fill='green' filter='url(#hard)'/>"
+                        "</g></g></svg>";
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
+    XCTAssertEqual(svg.renderingOptions.renderQuality, kIJSVGRenderQualityFullResolution);
+    NSData* full = [self render:svg size:96 scale:1 flipped:NO blueBackground:NO];
+    XCTAssertNotNil(full);
+    NSMutableDictionary<NSNumber*, NSData*>* results = [NSMutableDictionary dictionary];
+    results[@(kIJSVGRenderQualityFullResolution)] = full;
+    for (NSNumber* value in @[ @(kIJSVGRenderQualityOptimized), @(kIJSVGRenderQualityLow), @(kIJSVGRenderQualityFullResolution),
+             @(kIJSVGRenderQualityLow), @(kIJSVGRenderQualityOptimized), @(kIJSVGRenderQualityFullResolution) ]) {
+        IJSVGRenderQuality quality = value.integerValue;
+        IJSVGRenderingOptions* options = svg.renderingOptions;
+        options.renderQuality = quality;
+        svg.renderingOptions = options;
+        NSData* actual = [self render:svg size:96 scale:1 flipped:NO blueBackground:NO];
+        XCTAssertNotNil(actual);
+        XCTAssertEqualObjects(actual, [self render:svg size:96 scale:1 flipped:NO blueBackground:NO]);
+        IJSVG* fresh = [[IJSVG alloc] initWithSVGString:source];
+        fresh.renderingOptions = options;
+        XCTAssertEqualObjects(actual, [self render:fresh size:96 scale:1 flipped:NO blueBackground:NO]);
+        if (results[value] != nil) {
+            XCTAssertEqualObjects(actual, results[value]);
+        }
+        results[value] = actual;
+        options.renderQuality = kIJSVGRenderQualityFullResolution;
+        XCTAssertEqual(svg.renderingOptions.renderQuality, quality);
+    }
+    XCTAssertNotEqualObjects(results[@(kIJSVGRenderQualityFullResolution)], results[@(kIJSVGRenderQualityOptimized)]);
+    XCTAssertNotEqualObjects(results[@(kIJSVGRenderQualityOptimized)], results[@(kIJSVGRenderQualityLow)]);
 }
 
 - (void)testExplicitInvalidationRefreshesFilteredStyle

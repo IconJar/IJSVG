@@ -195,6 +195,9 @@ static CGImageRef IJSVGFilterNewSharedMetalImage(CIImage* output, CGRect extent,
 // bitmap.
 static _Thread_local NSUInteger IJSVGFilterRenderDepth = 0;
 
+// Nested filters reuse extra samples already supplied by an enclosing bitmap.
+static _Thread_local BOOL IJSVGFilterSupersamplingActive = NO;
+
 // A cached ancestor already retains the completed pixels of its nested filters.
 static _Thread_local BOOL IJSVGFilterHasCachingAncestor = NO;
 
@@ -1540,15 +1543,23 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     CGAffineTransform transform = IJSVGFilterPixelTransform(ctx);
     CGFloat scale = MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
 
-    // Only alpha amplifying matrices need extra coverage samples. Ordinary blurs
-    // and shadows retain destination resolution instead of processing 4x the
-    // pixels.
-    if (getenv("IJSVG_TMP_LOCALSS")) {
-        if (self.cachesRenderedOutput ? self.filterMetadata.requiresSupersampling : self.filter.requiresSupersampling) {
-            scale *= 2.f;
-        }
-    } else if (IJSVGFilterRenderDepth == 1 && self.requiresFilterSupersampling) {
-        scale *= 2.f;
+    // Full quality supplies extra coverage for the complete nested filter tree.
+    // Optimized quality samples only the effects that need it and reuses any
+    // extra samples inherited from an enclosing bitmap. Low quality uses the
+    // destination sampling scale without additional coverage samples.
+    switch (self.renderQuality) {
+        case kIJSVGRenderQualityLow:
+            break;
+        case kIJSVGRenderQualityOptimized:
+            if (!IJSVGFilterSupersamplingActive && (self.cachesRenderedOutput ? self.filterMetadata.requiresSupersampling : self.filter.requiresSupersampling)) {
+                scale *= 2.f;
+            }
+            break;
+        default:
+            if (IJSVGFilterRenderDepth == 1 && self.requiresFilterSupersampling) {
+                scale *= 2.f;
+            }
+            break;
     }
     scale = MIN(scale, 4096.f / MAX(workRect.size.width, workRect.size.height));
 
@@ -1882,9 +1893,12 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     // independent descendants eligible for caching.
     BOOL willCacheOutput = _outputSignature != nil && pixelSize.height > 0 && pixelSize.width <= 4194304 / pixelSize.height;
     IJSVGFilterHasCachingAncestor = previousCachingAncestor || willCacheOutput;
+    BOOL previousSupersampling = IJSVGFilterSupersamplingActive;
+    IJSVGFilterSupersamplingActive = previousSupersampling || scale > destinationScale * (1.f + 1e-9);
     @try {
         [self renderGraph:graph context:ctx region:region workRect:workRect pixelSize:pixelSize scale:scale];
     } @finally {
+        IJSVGFilterSupersamplingActive = previousSupersampling;
         IJSVGFilterHasCachingAncestor = previousCachingAncestor;
     }
 }
