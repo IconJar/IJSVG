@@ -452,6 +452,38 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
     XCTAssertNotEqualObjects(results[@(kIJSVGRenderQualityOptimized)], results[@(kIJSVGRenderQualityLow)]);
 }
 
+// Mask and pattern cache replay must follow quality changes and preserve sizing.
+- (void)testLowQualityMasksAndPatternsRestoreFullQuality
+{
+    NSArray<NSString*>* documents = @[
+        @"<defs><mask id='m' mask-type='alpha'><circle cx='16.3' cy='15.7' r='12.4' fill='white'/></mask></defs><rect width='32' height='32' fill='red' mask='url(#m)'/>",
+        @"<defs><mask id='m' mask-type='luminance'><circle cx='16.3' cy='15.7' r='12.4' fill='#bbb'/></mask></defs><rect width='32' height='32' fill='red' mask='url(#m)'/>",
+        @"<defs><pattern id='p' patternUnits='userSpaceOnUse' width='4.3' height='5.7'><circle cx='2.1' cy='2.7' r='1.8' fill='red'/></pattern><filter id='f' x='0' y='0' width='100%' height='100%'><feColorMatrix type='saturate' values='.5'/></filter></defs><rect width='32' height='32' fill='url(#p)' filter='url(#f)'/>"
+    ];
+    for (NSString* body in documents) {
+        NSString* xml = [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><g transform='rotate(7 16 16)'>%@</g></svg>", body];
+        for (NSNumber* backingScale in @[ @1, @2 ]) {
+            IJSVG* reused = [[IJSVG alloc] initWithSVGString:xml];
+            NSData* full = [self render:reused size:95 scale:backingScale.doubleValue flipped:YES blueBackground:NO];
+            XCTAssertNotNil(full);
+            for (NSNumber* value in @[ @(kIJSVGRenderQualityLow), @(kIJSVGRenderQualityOptimized), @(kIJSVGRenderQualityFullResolution) ]) {
+                IJSVGRenderingOptions* options = reused.renderingOptions;
+                options.renderQuality = value.integerValue;
+                reused.renderingOptions = options;
+                NSData* actual = [self render:reused size:95 scale:backingScale.doubleValue flipped:YES blueBackground:NO];
+                XCTAssertNotNil(actual);
+                XCTAssertEqualObjects(actual, [self render:reused size:95 scale:backingScale.doubleValue flipped:YES blueBackground:NO]);
+                IJSVG* fresh = [[IJSVG alloc] initWithSVGString:xml];
+                fresh.renderingOptions = options;
+                XCTAssertEqualObjects(actual, [self render:fresh size:95 scale:backingScale.doubleValue flipped:YES blueBackground:NO]);
+                if (value.integerValue == kIJSVGRenderQualityFullResolution) {
+                    XCTAssertEqualObjects(actual, full);
+                }
+            }
+        }
+    }
+}
+
 - (void)testExplicitInvalidationRefreshesFilteredStyle
 {
     IJSVG* reused = [self svgForDocument:0];

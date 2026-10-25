@@ -560,11 +560,23 @@ static BOOL IJSVGFilterReservePixelSize(CGSize pixelSize, IJSVGQuartzFilterBatch
     return YES;
 }
 
-static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx, CGRect region, CGRect workRect)
+static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx, CGRect region, CGRect workRect, IJSVGRenderQuality quality)
 {
     CGContextSaveGState(ctx);
     CGContextClipToRect(ctx, region);
-    CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
+
+    // Use the selected quality for both fresh filter output and cached replay.
+    switch (quality) {
+        case kIJSVGRenderQualityOptimized:
+            CGContextSetInterpolationQuality(ctx, kCGInterpolationMedium);
+            break;
+        case kIJSVGRenderQualityLow:
+            CGContextSetInterpolationQuality(ctx, kCGInterpolationLow);
+            break;
+        default:
+            CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
+            break;
+    }
     CGContextDrawImage(ctx, workRect, image);
     CGContextRestoreGState(ctx);
 }
@@ -1045,7 +1057,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
             }
         }
     }
-    IJSVGFilterDrawFilteredImage(image, ctx, region, workRect);
+    IJSVGFilterDrawFilteredImage(image, ctx, region, workRect, self.renderQuality);
 }
 
 + (BOOL)shouldRenderPaintDuringCollection:(IJSVGPaint*)paint
@@ -1487,7 +1499,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
                 [self drawFilteredImage:image context:ctx region:region workRect:workRect independentPixels:independentPixels];
             } else {
                 CGRect outputRect = CGRectApplyAffineTransform(outputExtent, CGAffineTransformInvert(imageTransform));
-                IJSVGFilterDrawFilteredImage(image, ctx, region, outputRect);
+                IJSVGFilterDrawFilteredImage(image, ctx, region, outputRect, self.renderQuality);
             }
             CGImageRelease(image);
         }
@@ -1881,7 +1893,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
                 [batch.entries setObject:entry forKey:self];
                 [batch.orderedEntries addObject:entry];
             } else {
-                IJSVGFilterDrawFilteredImage(output.image, ctx, region, workRect);
+                IJSVGFilterDrawFilteredImage(output.image, ctx, region, workRect, self.renderQuality);
             }
             return;
         }

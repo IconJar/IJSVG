@@ -28,7 +28,8 @@ FOUNDATION_EXPORT const CGFloat IJSVGDefaultFontSize;
 
 @property (nonatomic, assign) BOOL filtersEnabled;
 
-// Defaults to full resolution. Faster modes can change filtered edge pixels.
+// Defaults to full resolution. Applies to image interpolation, filter coverage
+// sampling and filter output interpolation. Faster modes can change edge pixels.
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) BOOL ignoreIntrinsicSize;
 
