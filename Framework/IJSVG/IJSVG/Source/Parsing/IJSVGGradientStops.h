@@ -18,7 +18,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
 + (BOOL)canCacheElement:(IJSVGXMLNode*)element;
 @property (nonatomic, readonly) CGFloat inheritedOpacity;
 
-- (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(IJSVGXMLNode*)element;
+- (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(IJSVGXMLNode*)element parser:(IJSVGParser*)parser;
 - (void)applyToGradient:(IJSVGGradient*)gradient;
 - (void)appendStopsToGradient:(IJSVGGradient*)gradient;
 - (CGGradientRef)CGGradientForGradient:(IJSVGGradient*)gradient;

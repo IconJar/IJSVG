@@ -230,16 +230,94 @@ static IJSVGStyleSheetStyle* IJSVGStyleSheetResolveBuffer(IJSVGStyleSheetDeclara
     return result;
 }
 
-static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableIndexSet*>* index, NSSet<NSString*>* names, NSUInteger ruleIndex)
+typedef struct {
+    NSUInteger* values;
+    NSUInteger count;
+    NSUInteger capacity;
+    NSUInteger inlineValues[32];
+} IJSVGRuleIndexes;
+
+static void IJSVGRuleIndexesDestroy(IJSVGRuleIndexes* indexes)
+{
+    if (indexes->values != indexes->inlineValues) {
+        free(indexes->values);
+    }
+}
+
+static void IJSVGRuleIndexesRelease(CFAllocatorRef allocator, const void* value)
+{
+    IJSVGRuleIndexesDestroy((IJSVGRuleIndexes*)value);
+    free((void*)value);
+}
+
+static CFMutableDictionaryRef IJSVGRuleIndexCreate(void)
+{
+    CFDictionaryValueCallBacks callbacks = { 0, NULL, IJSVGRuleIndexesRelease, NULL, NULL };
+    return CFDictionaryCreateMutable(NULL, 0, &kCFCopyStringDictionaryKeyCallBacks, &callbacks);
+}
+
+static void IJSVGRuleIndexesAppend(IJSVGRuleIndexes* indexes, const NSUInteger* values, NSUInteger count)
+{
+    if (count == 0) {
+        return;
+    }
+    if (count > SIZE_MAX / sizeof(*values) - indexes->count) {
+        [NSException raise:NSMallocException format:@"Too many CSS rule indexes"];
+    }
+    NSUInteger required = indexes->count + count;
+    if (indexes->values == NULL) {
+        indexes->values = indexes->inlineValues;
+        indexes->capacity = 32;
+    }
+    if (required > indexes->capacity) {
+        NSUInteger maximum = SIZE_MAX / sizeof(*values);
+        NSUInteger capacity = MAX(required, indexes->capacity > maximum / 2 ? maximum : indexes->capacity * 2);
+        BOOL inlineStorage = indexes->values == indexes->inlineValues;
+        NSUInteger* grown = inlineStorage ? malloc(capacity * sizeof(*grown)) : realloc(indexes->values, capacity * sizeof(*grown));
+        if (grown == NULL) {
+            [NSException raise:NSMallocException format:@"Unable to allocate CSS rule indexes"];
+        }
+        if (inlineStorage) {
+            memcpy(grown, indexes->values, indexes->count * sizeof(*grown));
+        }
+        indexes->values = grown;
+        indexes->capacity = capacity;
+    }
+    memcpy(indexes->values + indexes->count, values, count * sizeof(*values));
+    indexes->count = required;
+}
+
+static void IJSVGStyleSheetIndexRule(CFMutableDictionaryRef index, NSSet<NSString*>* names, NSUInteger ruleIndex)
 {
     for (NSString* name in names) {
-        NSMutableIndexSet* entries = index[name];
-        if (entries == nil) {
-            entries = [[NSMutableIndexSet alloc] init];
-            index[name] = entries;
+        IJSVGRuleIndexes* entries = (IJSVGRuleIndexes*)CFDictionaryGetValue(index, (__bridge CFStringRef)name);
+        if (entries == NULL) {
+            entries = calloc(1, sizeof(*entries));
+            if (entries == NULL) {
+                [NSException raise:NSMallocException format:@"Unable to allocate CSS rule index"];
+            }
+            CFDictionarySetValue(index, (__bridge CFStringRef)name, entries);
         }
-        [entries addIndex:ruleIndex];
+        IJSVGRuleIndexesAppend(entries, &ruleIndex, 1);
     }
+}
+
+static void IJSVGRuleIndexCollect(IJSVGRuleIndexes* candidates, CFDictionaryRef index, NSString* name)
+{
+    if (name == nil) {
+        return;
+    }
+    const IJSVGRuleIndexes* entries = CFDictionaryGetValue(index, (__bridge CFStringRef)name);
+    if (entries != NULL) {
+        IJSVGRuleIndexesAppend(candidates, entries->values, entries->count);
+    }
+}
+
+static int IJSVGRuleIndexCompare(const void* a, const void* b)
+{
+    NSUInteger left = *(const NSUInteger*)a;
+    NSUInteger right = *(const NSUInteger*)b;
+    return left < right ? -1 : left > right;
 }
 
 static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictionary<NSString*, NSString*>* namespaces)
@@ -309,10 +387,10 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
 }
 
 @implementation IJSVGStyleSheet {
-    NSMutableDictionary<NSString*, NSMutableIndexSet*>* _identifierRules;
-    NSMutableDictionary<NSString*, NSMutableIndexSet*>* _classRules;
-    NSMutableDictionary<NSString*, NSMutableIndexSet*>* _tagRules;
-    NSMutableIndexSet* _universalRules;
+    CFMutableDictionaryRef _identifierRules;
+    CFMutableDictionaryRef _classRules;
+    CFMutableDictionaryRef _tagRules;
+    IJSVGRuleIndexes _universalRules;
     IJSVGStyleSheetLayer* _layerRoot;
     IJSVGStyleSheetLayer* _currentLayer;
     BOOL _layerOrderDirty;
@@ -390,10 +468,9 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
     if ((self = [super init]) != nil) {
         _selectors = [[NSMutableDictionary alloc] init];
         _rules = [[NSMutableArray alloc] init];
-        _identifierRules = [[NSMutableDictionary alloc] init];
-        _classRules = [[NSMutableDictionary alloc] init];
-        _tagRules = [[NSMutableDictionary alloc] init];
-        _universalRules = [[NSMutableIndexSet alloc] init];
+        _identifierRules = IJSVGRuleIndexCreate();
+        _classRules = IJSVGRuleIndexCreate();
+        _tagRules = IJSVGRuleIndexCreate();
     }
     return self;
 }
@@ -446,6 +523,20 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
         [_layerRoot assignOrderStartingAt:0];
         _layerOrderDirty = NO;
     }
+}
+
+- (void)dealloc
+{
+    if (_identifierRules != NULL) {
+        CFRelease(_identifierRules);
+    }
+    if (_classRules != NULL) {
+        CFRelease(_classRules);
+    }
+    if (_tagRules != NULL) {
+        CFRelease(_tagRules);
+    }
+    IJSVGRuleIndexesDestroy(&_universalRules);
 }
 
 - (void)parseStyleBytes:(const char*)chars length:(NSUInteger)length namespaces:(NSMutableDictionary*)namespaces environment:(IJSVGMediaEnvironment)environment mediaMatches:(IJSVGByteCache**)mediaMatches nesting:(NSUInteger)nesting
@@ -713,7 +804,8 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
     }
     [_rules addObject:aRule];
     if (aRule.matchesUniversalSelector) {
-        [_universalRules addIndex:aRule.sourceIndex];
+        NSUInteger ruleIndex = aRule.sourceIndex;
+        IJSVGRuleIndexesAppend(&_universalRules, &ruleIndex, 1);
     } else {
         IJSVGStyleSheetIndexRule(_identifierRules, aRule.matchingIdentifiers, aRule.sourceIndex);
         IJSVGStyleSheetIndexRule(_classRules, aRule.matchingClassNames, aRule.sourceIndex);
@@ -734,31 +826,26 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
         IJSVGStyleSheetSelector* selector = nil;
         return [rule matchesNode:node selector:&selector] ? rule.style : nil;
     }
-    NSMutableIndexSet* candidates = [_universalRules mutableCopy];
-    if (node.identifier != nil) {
-        NSIndexSet* entries = _identifierRules[node.identifier];
-        if (entries != nil) {
-            [candidates addIndexes:entries];
-        }
-    }
-    if (node.name != nil) {
-        NSIndexSet* entries = _tagRules[node.name];
-        if (entries != nil) {
-            [candidates addIndexes:entries];
-        }
-    }
+    __attribute__((cleanup(IJSVGRuleIndexesDestroy))) IJSVGRuleIndexes candidates = { 0 };
+    IJSVGRuleIndexesAppend(&candidates, _universalRules.values, _universalRules.count);
+    IJSVGRuleIndexCollect(&candidates, _identifierRules, node.identifier);
+    IJSVGRuleIndexCollect(&candidates, _tagRules, node.name);
     for (NSString* className in node.classNameList) {
-        NSIndexSet* entries = _classRules[className];
-        if (entries != nil) {
-            [candidates addIndexes:entries];
-        }
+        IJSVGRuleIndexCollect(&candidates, _classRules, className);
+    }
+    if (candidates.count > 1) {
+        qsort(candidates.values, candidates.count, sizeof(*candidates.values), IJSVGRuleIndexCompare);
     }
     IJSVGStyleSheetDeclaration inlineEntries[32];
     IJSVGStyleSheetDeclarations buffer = { inlineEntries, inlineEntries, 0, 32, NO };
     IJSVGStyleSheetRule* firstRule = nil;
     NSUInteger firstSpecificity = 0;
     @try {
-        for (NSUInteger index = candidates.firstIndex; index != NSNotFound; index = [candidates indexGreaterThanIndex:index]) {
+        for (NSUInteger candidate = 0; candidate < candidates.count; candidate++) {
+            NSUInteger index = candidates.values[candidate];
+            if (candidate != 0 && index == candidates.values[candidate - 1]) {
+                continue;
+            }
             IJSVGStyleSheetRule* rule = _rules[index];
             IJSVGStyleSheetSelector* selector = nil;
             if (![rule matchesNode:node selector:&selector]) {

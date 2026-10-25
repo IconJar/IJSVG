@@ -9,6 +9,8 @@
 #import <IJSVG/IJSVGStop.h>
 #import <IJSVGXML.h>
 
+@class IJSVGParser;
+
 typedef struct {
     CFTypeRef offset;
     CFTypeRef opacity;
@@ -17,6 +19,6 @@ typedef struct {
     BOOL isNoneOrTransparent;
 } IJSVGGradientStopData;
 
-IJSVGGradientStopData IJSVGGradientStopDataCreate(IJSVGStop* stop, IJSVGXMLNode* element);
+IJSVGGradientStopData IJSVGGradientStopDataCreate(IJSVGStop* stop, IJSVGXMLNode* element, IJSVGParser* parser);
 void IJSVGGradientStopDataRelease(IJSVGGradientStopData* data);
 IJSVGStop* IJSVGGradientStopDataCreateStop(const IJSVGGradientStopData* data);

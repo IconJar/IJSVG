@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVGFilterPaint.h>
 #import <IJSVGGradientPaint.h>
+#import <IJSVGNodeParsing.h>
 #import <IJSVGRootPaint.h>
 
 typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
@@ -20,6 +21,7 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
 
 @interface IJSVGGradientPaint () {
     BOOL _hasResolvedPlacement;
+    CGGradientRef _resolvedGradient;
     __weak IJSVGRootPaint* _gradientRoot;
     CGRect _resolvedViewport;
     CGRect _resolvedBounds;
@@ -41,13 +43,20 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
     return IJSVGPaintTraitGradient;
 }
 
+- (void)dealloc
+{
+    CGGradientRelease(_resolvedGradient);
+}
+
 - (void)setGradient:(IJSVGGradient*)gradient
 {
+    CGGradientRelease(_resolvedGradient);
+    _resolvedGradient = NULL;
     _gradient = gradient;
     _gradientRoot = nil;
     _hasResolvedPlacement = NO;
     _resolvedGradientTransforms = nil;
-    _gradientKind = [gradient isMemberOfClass:IJSVGLinearGradient.class] ? IJSVGResolvedGradientKindLinear : ([gradient isMemberOfClass:IJSVGRadialGradient.class] ? IJSVGResolvedGradientKindRadial : IJSVGResolvedGradientKindCustom);
+    _gradientKind = (IJSVGBuiltInNodeType(gradient) == IJSVGNodeTypeLinearGradient) ? IJSVGResolvedGradientKindLinear : ((IJSVGBuiltInNodeType(gradient) == IJSVGNodeTypeRadialGradient) ? IJSVGResolvedGradientKindRadial : IJSVGResolvedGradientKindCustom);
 }
 
 - (void)drawInContext:(CGContextRef)ctx
@@ -164,11 +173,18 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
         }
         return;
     }
+
+    // Paints are snapshots until setNeedsDisplay rebuilds the render tree.
+    // Retain the prepared stops so redraws need no inherited style lookup.
+    // Custom gradient classes returned through their own drawing path above.
+    if (_resolvedGradient == NULL) {
+        _resolvedGradient = CGGradientRetain(_gradient.CGGradient);
+    }
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
     if (_gradientKind == IJSVGResolvedGradientKindLinear) {
-        CGContextDrawLinearGradient(ctx, _gradient.CGGradient, _startPoint, _endPoint, options);
+        CGContextDrawLinearGradient(ctx, _resolvedGradient, _startPoint, _endPoint, options);
     } else {
-        CGContextDrawRadialGradient(ctx, _gradient.CGGradient, _startPoint, _startRadius, _endPoint, _endRadius, options);
+        CGContextDrawRadialGradient(ctx, _resolvedGradient, _startPoint, _startRadius, _endPoint, _endRadius, options);
         CGContextRestoreGState(ctx);
     }
 }

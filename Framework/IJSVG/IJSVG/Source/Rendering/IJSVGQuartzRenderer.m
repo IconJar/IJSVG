@@ -31,6 +31,7 @@
 #import <IJSVGGroupPaint.h>
 #import <IJSVGImagePaint.h>
 #import <IJSVGMaskPaint.h>
+#import <IJSVGNodeParsing.h>
 #import <IJSVGPaint.h>
 #import <IJSVGPatternPaint.h>
 #import <IJSVGQuartzRenderer.h>
@@ -904,8 +905,8 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     // Keep the source tree intact for inherited styles and resource coordinates,
     // omit only its redundant paint allocation and bounds calculation.
     // Measurement trees retain every source node for visibility queries.
-    BOOL plainGroup = [node isMemberOfClass:IJSVGGroup.class] && [node.name isEqualToString:@"g"];
-    BOOL pathUse = [node isMemberOfClass:IJSVGUse.class] && !node.x.isCalculated && !node.y.isCalculated && ((((IJSVGUse*)node).children.firstObject.nodeTraits & IJSVGNodeTypeTraitPath) != 0);
+    BOOL plainGroup = (IJSVGBuiltInNodeType(node) == IJSVGNodeTypeGroup) && [node.name isEqualToString:@"g"];
+    BOOL pathUse = (IJSVGBuiltInNodeType(node) == IJSVGNodeTypeUse) && !node.x.isCalculated && !node.y.isCalculated && ((((IJSVGUse*)node).children.firstObject.nodeTraits & IJSVGNodeTypeTraitPath) != 0);
     if ((plainGroup || pathUse) && ((IJSVGGroup*)node).children.count == 1 && [self canOmitContainerPaint:node]) {
         return [self drawablePaintForNode:((IJSVGGroup*)node).children.firstObject];
     }
@@ -1072,7 +1073,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 - (IJSVGPaint*)drawableBasicPaintForPathNode:(IJSVGPath*)node resolvedPath:(CGPathRef)resolvedPath resolvedPathBounds:(CGRect)resolvedPathBounds fillRule:(IJSVGWindingRule)fillRule
 {
-    IJSVGShapePaint* paint = node.primitiveType == kIJSVGPrimitivePathTypeRect ? IJSVGRectPaint.paint : IJSVGShapePaint.paint;
+    IJSVGShapePaint* paint = node.primitiveType == kIJSVGPrimitivePathTypeRect ? ((IJSVGRectPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintRect)) : ((IJSVGShapePaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintShape));
     paint.primitiveType = node.primitiveType;
     if (CGPathIsEmpty(resolvedPath) == NO) {
         [self applyPath:resolvedPath bounds:resolvedPathBounds toShapePaint:paint];
@@ -1534,7 +1535,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
     CGPathRef paintPath = resolvedPathBoundsAreFinite == YES ? [self newPaintPathForResolvedPath:resolvedPath bounds:resolvedPathBounds] : CGPathCreateMutable();
     IJSVGNode* fill = style->fill;
-    IJSVGGradient* gradient = [fill isMemberOfClass:IJSVGLinearGradient.class] ? (IJSVGGradient*)fill : nil;
+    IJSVGGradient* gradient = (IJSVGBuiltInNodeType(fill) == IJSVGNodeTypeLinearGradient) ? (IJSVGGradient*)fill : nil;
     IJSVGPrimitivePathType primitiveType = node.primitiveType;
     BOOL needsMarkers = primitiveType == kIJSVGPrimitivePathTypePath || primitiveType == kIJSVGPrimitivePathTypeLine || primitiveType == kIJSVGPrimitivePathTypePolygon || primitiveType == kIJSVGPrimitivePathTypePolyLine || (gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox);
     IJSVGMarker* markerStart = needsMarkers ? style->markerStart : nil;
@@ -1561,11 +1562,11 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
 
     CGFloat fillOpacity = style->fillOpacity.value;
-    BOOL directGradient = gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox && strokePaint == nil && fillOpacity == 1.f && style->opacity == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && markerStart == nil && markerMid == nil && markerEnd == nil && paint.class == IJSVGShapePaint.class && _style.colors.replacedColorCount == 0;
+    BOOL directGradient = gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox && strokePaint == nil && fillOpacity == 1.f && style->opacity == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && markerStart == nil && markerMid == nil && markerEnd == nil && IJSVGGetBuiltInPaintKind(paint) == IJSVGBuiltInPaintShape && _style.colors.replacedColorCount == 0;
 
     // With no separate stroke, opacity or marker operations, a solid fill
     // can use the existing shape instead of allocating a second paint and path.
-    paint.directFill = gradient == nil && strokePaint == nil && [IJSVGPaint fillTypeForFill:fill] == IJSVGPaintFillTypeColor && fillOpacity == 1.f && style->opacity == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && markerStart == nil && markerMid == nil && markerEnd == nil && paint.class == IJSVGShapePaint.class;
+    paint.directFill = gradient == nil && strokePaint == nil && [IJSVGPaint fillTypeForFill:fill] == IJSVGPaintFillTypeColor && fillOpacity == 1.f && style->opacity == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && markerStart == nil && markerMid == nil && markerEnd == nil && IJSVGGetBuiltInPaintKind(paint) == IJSVGBuiltInPaintShape;
     IJSVGPaint* fillPaint = nil;
     if (directGradient) {
         paint.fillGradient = [self gradientByResolvingFontLengths:gradient];
@@ -1670,6 +1671,8 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 #pragma mark Context Paint
 
+/// Reports whether a node or its descendants use a context fill or stroke.
+/// Read the paints directly so custom accessors are respected.
 - (BOOL)nodeNeedsContextPaint:(IJSVGNode*)source
 {
     if ((source.nodeTraits & IJSVGNodeTypeTraitGraphics) == 0) {
@@ -1947,7 +1950,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
             if (component != nil) {
                 // Retain shape metadata so vector export can reconstruct paint servers
                 // and stroke geometry, even when markers separate the two operations.
-                IJSVGShapePaint* placed = IJSVGShapePaint.paint;
+                IJSVGShapePaint* placed = ((IJSVGShapePaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintShape));
                 placed.path = shape.path;
                 placed.primitiveType = shape.primitiveType;
                 placed.sourceNode = shape.sourceNode;
@@ -2082,17 +2085,17 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 - (IJSVGPaint*)markerInstanceWithContent:(IJSVGPaint*)content marker:(IJSVGMarker*)marker viewport:(CGRect)viewport mapping:(CGAffineTransform)mapping transform:(CGAffineTransform)transform
 {
     NSArray<IJSVGPaint*>* children = @[ content ];
-    if (content.class == IJSVGGroupPaint.class && content.opacity == 1.f && !content.hidden && !content.isolated && content.blendingMode == kCGBlendModeNormal && content.clipPath == NULL && content.clipPaints.count == 0 && content.maskPaint == nil && CGRectIsNull(content.sourceNode.backgroundRect) && CGAffineTransformIsIdentity(content.placementTransform)) {
+    if (IJSVGGetBuiltInPaintKind(content) == IJSVGBuiltInPaintGroup && content.opacity == 1.f && !content.hidden && !content.isolated && content.blendingMode == kCGBlendModeNormal && content.clipPath == NULL && content.clipPaints.count == 0 && content.maskPaint == nil && CGRectIsNull(content.sourceNode.backgroundRect) && CGAffineTransformIsIdentity(content.placementTransform)) {
         children = content.children;
     }
     if (!CGAffineTransformIsIdentity(mapping)) {
-        IJSVGTransformPaint* mapped = IJSVGTransformPaint.paint;
+        IJSVGTransformPaint* mapped = ((IJSVGTransformPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintTransform));
         mapped.affineTransform = mapping;
         mapped.children = children;
         children = @[ mapped ];
     }
     if (marker.overflowVisibility != IJSVGOverflowVisibilityVisible) {
-        IJSVGGroupPaint* clipped = IJSVGGroupPaint.paint;
+        IJSVGGroupPaint* clipped = ((IJSVGGroupPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintGroup));
         clipped.children = children;
         clipped.boundingBox = [IJSVGPaint calculateBoundingBoxForChildren:children];
         clipped.outerBoundingBox = CGRectIntersection([IJSVGPaint calculateFrameForChildren:children], viewport);
@@ -2102,7 +2105,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         children = @[ clipped ];
     }
 
-    IJSVGTransformPaint* instance = IJSVGTransformPaint.paint;
+    IJSVGTransformPaint* instance = ((IJSVGTransformPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintTransform));
     instance.children = children;
     instance.affineTransform = transform;
     return instance;
@@ -2156,7 +2159,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 - (IJSVGPaint*)drawableStrokedPaintForPathNode:(IJSVGPath*)node style:(const IJSVGResolvedStrokeStyle*)style currentColor:(CGColorRef)currentColor resolvedPath:(CGPathRef)resolvedPath resolvedPathBounds:(CGRect)resolvedPathBounds
 {
-    IJSVGStrokePaint* paint = IJSVGStrokePaint.paint;
+    IJSVGStrokePaint* paint = ((IJSVGStrokePaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintStroke));
     [self applyPath:resolvedPath bounds:resolvedPathBounds toShapePaint:paint];
 
     // Choose the stroke color.
@@ -2376,12 +2379,12 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
     // Avoid allocating and drawing a transform container for an identity viewBox.
     if (!CGAffineTransformIsIdentity(mapping)) {
-        IJSVGTransformPaint* mapped = IJSVGTransformPaint.paint;
+        IJSVGTransformPaint* mapped = ((IJSVGTransformPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintTransform));
         mapped.affineTransform = mapping;
         mapped.children = children;
         children = @[ mapped ];
     }
-    IJSVGGroupPaint* content = IJSVGGroupPaint.paint;
+    IJSVGGroupPaint* content = ((IJSVGGroupPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintGroup));
     content.children = children;
     content.boundingBox = [IJSVGPaint calculateBoundingBoxForChildren:content.children];
     content.outerBoundingBox = [IJSVGPaint calculateFrameForChildren:content.children];
@@ -2396,7 +2399,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     if (CGAffineTransformIsIdentity(placement)) {
         return content;
     }
-    IJSVGTransformPaint* paint = IJSVGTransformPaint.paint;
+    IJSVGTransformPaint* paint = ((IJSVGTransformPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintTransform));
     paint.affineTransform = placement;
     paint.children = @[ content ];
     return paint;
@@ -2404,7 +2407,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 - (IJSVGPaint*)drawablePaintForRootNode:(IJSVGRootNode*)node
 {
-    IJSVGRootPaint* paint = IJSVGRootPaint.paint;
+    IJSVGRootPaint* paint = ((IJSVGRootPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintRoot));
     IJSVGUnitRect* resolvedViewBox = [self.lengthFontResolver rectByResolvingFontLengths:node.viewBox node:node];
     paint.viewBox = resolvedViewBox;
     paint.backgroundColor = node.backgroundColor;
@@ -2476,7 +2479,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 - (IJSVGPaint*)drawablePaintForGroupNode:(IJSVGGraphicsNode*)node children:(NSArray<IJSVGPaint*>*)children
 {
-    IJSVGGroupPaint* paint = (node.nodeTraits & IJSVGNodeTypeTraitMask) != 0 ? IJSVGMaskPaint.paint : IJSVGGroupPaint.paint;
+    IJSVGGroupPaint* paint = (node.nodeTraits & IJSVGNodeTypeTraitMask) != 0 ? IJSVGMaskPaint.paint : ((IJSVGGroupPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintGroup));
 
     // Keep objectBoundingBox units independent of stroke coverage, including
     // when export introduces a group around a filtered, stroked shape.
@@ -2489,7 +2492,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 - (void)appendDrawablePaintsForNodes:(NSArray<IJSVGNode*>*)nodes toArray:(NSMutableArray<IJSVGPaint*>*)paints
 {
     for (IJSVGNode* node in nodes) {
-        if ([node isMemberOfClass:IJSVGGroup.class] && [node.name isEqualToString:@"g"] && [self canOmitContainerPaint:(IJSVGGroup*)node]) {
+        if ((IJSVGBuiltInNodeType(node) == IJSVGNodeTypeGroup) && [node.name isEqualToString:@"g"] && [self canOmitContainerPaint:(IJSVGGroup*)node]) {
             [self appendDrawablePaintsForNodes:((IJSVGGroup*)node).children toArray:paints];
             continue;
         }
@@ -2512,7 +2515,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 - (IJSVGGradientPaint*)drawableBasicGradientPaintForPaint:(IJSVGPaint*)paint gradient:(IJSVGGradient*)gradient
 {
     // Create the gradient fill.
-    IJSVGGradientPaint* gradientPaint = IJSVGGradientPaint.paint;
+    IJSVGGradientPaint* gradientPaint = ((IJSVGGradientPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintGradient));
     gradientPaint.backingScaleFactor = _backingScale;
 
     // Copy the gradient so style changes leave the original unchanged.
@@ -2557,7 +2560,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
 
     // Create the pattern fill.
-    IJSVGPatternPaint* patternPaint = IJSVGPatternPaint.paint;
+    IJSVGPatternPaint* patternPaint = ((IJSVGPatternPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintPattern));
     patternPaint.patternNode = pattern;
     patternPaint.frame = (CGRect) { .origin = CGPointZero, .size = paint.outerBoundingBox.size };
 
@@ -2834,7 +2837,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         }
         [gradient drawInContextRef:context bounds:gradient.units == IJSVGUnitObjectBoundingBox ? boundingBox : viewPort transform:CGAffineTransformIdentity];
     } else if ((paint.nodeTraits & IJSVGNodeTypeTraitPattern) != 0) {
-        IJSVGGroupPaint* reference = IJSVGGroupPaint.paint;
+        IJSVGGroupPaint* reference = ((IJSVGGroupPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintGroup));
         reference.boundingBox = boundingBox;
         reference.outerBoundingBox = boundingBox;
         reference.frame = boundingBox;
@@ -2923,7 +2926,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         // Filter root contents in viewBox coordinates.
         // Apply root opacity and clipping afterward.
         IJSVGRootPaint* rootPaint = (IJSVGRootPaint*)paint;
-        IJSVGGroupPaint* source = IJSVGGroupPaint.paint;
+        IJSVGGroupPaint* source = ((IJSVGGroupPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintGroup));
         source.children = rootPaint.children;
         rootPaint.children = @[];
         source.boundingBox = [IJSVGPaint calculateBoundingBoxForChildren:source.children];
@@ -3031,7 +3034,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
     // Use one wrapper for all transforms to save memory.
     // Keep their original order.
-    IJSVGTransformPaint* parentPaint = IJSVGTransformPaint.paint;
+    IJSVGTransformPaint* parentPaint = ((IJSVGTransformPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintTransform));
     for (IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
         IJSVGTransform* resolvedTransform = [transform transformByApplyingUnits:contentUnits bounds:unitBounds];
         identity = CGAffineTransformConcat(identity, resolvedTransform.CGAffineTransform);

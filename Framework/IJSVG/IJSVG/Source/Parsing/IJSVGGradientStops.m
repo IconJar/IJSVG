@@ -118,7 +118,8 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
     IJSVGGradientStopData* _stops;
     NSUInteger _stopCount;
     NSArray* _colors;
-    NSData* _locations;
+    CGFloat* _locations;
+    NSUInteger _locationCount;
     CGGradientRef _sharedGradient;
     CGGradientRef _sharedLinearGradient;
 }
@@ -176,7 +177,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
     return YES;
 }
 
-- (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(IJSVGXMLNode*)element
+- (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(IJSVGXMLNode*)element parser:(IJSVGParser*)parser
 {
     if ((self = [super init]) != nil) {
         NSUInteger count = gradient.children.count;
@@ -189,11 +190,21 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
         _inheritedOpacity = gradient.fillOpacity.value;
         IJSVGXMLNode* source = IJSVGXMLFirstChild(element);
         for (IJSVGStop* stop in gradient.children) {
-            _stops[_stopCount++] = IJSVGGradientStopDataCreate(stop, source);
+            _stops[_stopCount++] = IJSVGGradientStopDataCreate(stop, source, parser);
             source = IJSVGXMLNext(source);
         }
         _colors = gradient.colors.copy;
-        _locations = [NSData dataWithBytes:gradient.locations length:gradient.numberOfStops * sizeof(CGFloat)];
+        _locationCount = gradient.numberOfStops;
+        if (_locationCount > SIZE_MAX / sizeof(*_locations)) {
+            return nil;
+        }
+        if (_locationCount != 0) {
+            _locations = malloc(_locationCount * sizeof(*_locations));
+            if (_locations == NULL) {
+                return nil;
+            }
+            memcpy(_locations, gradient.locations, _locationCount * sizeof(*_locations));
+        }
         [gradient shareGradientWithStops:self];
     }
     return self;
@@ -205,6 +216,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
         IJSVGGradientStopDataRelease(_stops + index);
     }
     free(_stops);
+    free(_locations);
     CGGradientRelease(_sharedGradient);
     CGGradientRelease(_sharedLinearGradient);
 }
@@ -214,12 +226,12 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
     [gradient deferStops:self];
     gradient.colors = _colors;
     gradient.numberOfStops = _colors.count;
-    CGFloat* locations = _locations.length == 0 ? NULL : malloc(_locations.length);
+    CGFloat* locations = _locationCount == 0 ? NULL : malloc(_locationCount * sizeof(*locations));
     if (locations != NULL) {
-        memcpy(locations, _locations.bytes, _locations.length);
+        memcpy(locations, _locations, _locationCount * sizeof(*locations));
     }
     gradient.locations = locations;
-    if (locations != NULL || _locations.length == 0) {
+    if (locations != NULL || _locationCount == 0) {
         [gradient shareGradientWithStops:self];
     }
 }

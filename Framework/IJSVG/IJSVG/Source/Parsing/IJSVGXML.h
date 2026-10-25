@@ -118,7 +118,17 @@ IJSVGXMLAttribute* IJSVGXMLAttributeForIdentifier(IJSVGXMLNode* node, IJSVGNodeA
 IJSVGXMLAttribute* IJSVGXMLAttributeNamed(IJSVGXMLNode* node, NSString* name);
 NSString* IJSVGXMLAttributeLocalName(IJSVGXMLAttribute* attribute);
 NSString* IJSVGXMLAttributeURI(IJSVGXMLAttribute* attribute);
-NSString* IJSVGXMLAttributeValue(IJSVGXMLAttribute* attribute);
+
+// The document retains the cached string. Inline the common borrowed lookup so
+// callers need no retain/autorelease handoff just to inspect an attribute.
+CFStringRef IJSVGXMLAttributeGetValue(IJSVGXMLAttribute* attribute) CF_RETURNS_NOT_RETAINED;
+static inline NSString* IJSVGXMLAttributeValue(IJSVGXMLAttribute* attribute)
+{
+    if (attribute == NULL) {
+        return nil;
+    }
+    return (__bridge NSString*)(attribute->cachedValue ?: IJSVGXMLAttributeGetValue(attribute));
+}
 const char* IJSVGXMLAttributeBytes(IJSVGXMLAttribute* attribute);
 
 // These collections use opaque pointer keys: no Objective C message may be sent

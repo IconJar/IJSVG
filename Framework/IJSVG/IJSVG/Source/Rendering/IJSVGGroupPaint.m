@@ -52,6 +52,18 @@ static BOOL IJSVGGroupNeedsBackgroundPixels(IJSVGPaint* root)
 
 @implementation IJSVGGroupPaint
 
+// Allocation already supplies the class. A static identity
+// comparison here avoids object class queries in parsing and drawing, while
+// subclasses keep the general implementation.
++ (instancetype)allocWithZone:(NSZone*)zone
+{
+    IJSVGGroupPaint* instance = [super allocWithZone:zone];
+    if (self == IJSVGGroupPaint.class) {
+        instance->_builtInPaintKind = IJSVGBuiltInPaintGroup;
+    }
+    return instance;
+}
+
 - (IJSVGPaintTraits)paintTraits
 {
     return IJSVGPaintTraitGroup;

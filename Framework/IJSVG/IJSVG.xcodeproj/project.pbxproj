@@ -190,6 +190,7 @@
 		594688C1307EA244008E2E8A /* IJSVGGradientStops.m in Sources */ = {isa = PBXBuildFile; fileRef = 594688C0307EA244008E2E8A /* IJSVGGradientStops.m */; };
 		594688C3307ED1FA008E2E8A /* IJSVGXML.h in Headers */ = {isa = PBXBuildFile; fileRef = 594688C2307ED1FA008E2E8A /* IJSVGXML.h */; };
 		594688C5307ED1FA008E2E8A /* IJSVGXML.m in Sources */ = {isa = PBXBuildFile; fileRef = 594688C4307ED1FA008E2E8A /* IJSVGXML.m */; };
+		594CEDC0308E976E00A3728D /* IJSVGGradientDrawing.h in Headers */ = {isa = PBXBuildFile; fileRef = 594CEDBF308E976E00A3728D /* IJSVGGradientDrawing.h */; };
 		594CF561238FF46C009B251B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF560238FF46C009B251B /* Foundation.framework */; };
 		594CF563238FF473009B251B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF562238FF473009B251B /* QuartzCore.framework */; };
 		595FD12F29EC56BA00666897 /* IJSVGUmbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 595FD12E29EC56BA00666897 /* IJSVGUmbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -552,6 +553,7 @@
 		594688C0307EA244008E2E8A /* IJSVGGradientStops.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradientStops.m; sourceTree = "<group>"; };
 		594688C2307ED1FA008E2E8A /* IJSVGXML.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGXML.h; sourceTree = "<group>"; };
 		594688C4307ED1FA008E2E8A /* IJSVGXML.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGXML.m; sourceTree = "<group>"; };
+		594CEDBF308E976E00A3728D /* IJSVGGradientDrawing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGGradientDrawing.h; sourceTree = "<group>"; };
 		594CF46F238FF38E009B251B /* IJSVG.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = IJSVG.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		594CF473238FF38E009B251B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		594CF560238FF46C009B251B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -1105,6 +1107,7 @@
 				59B649E730759E8B0004EFC2 /* IJSVGTextPathMetrics.m */,
 				59FC3547306EAC590028BEAC /* IJSVGTransformPaint.h */,
 				59FC3557306EAC5B0028BEAC /* IJSVGTransformPaint.m */,
+				594CEDBF308E976E00A3728D /* IJSVGGradientDrawing.h */,
 			);
 			path = Rendering;
 			sourceTree = "<group>";
@@ -1396,6 +1399,7 @@
 				59F9EAF82808BB5F00188ACB /* IJSVGViewBox.h in Headers */,
 				5910A9AA284377D600BD1F03 /* IJSVGClipPath.h in Headers */,
 				5926079F287D6C1000E93B09 /* IJSVGFeatureFlags.h in Headers */,
+				594CEDC0308E976E00A3728D /* IJSVGGradientDrawing.h in Headers */,
 				59E6690D287D6C810085EDF5 /* IJSVGFeatureFlag.h in Headers */,
 				594687F1307E8070008E2E8A /* IJSVGFilterColorMatrixPrimitive.h in Headers */,
 				5910A9A628427AD600BD1F03 /* IJSVGMask.h in Headers */,

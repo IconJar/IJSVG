@@ -22,8 +22,8 @@
     CGPoint currentPoint = CGPathGetCurrentPoint(path);
     CGPoint firstControl = CGPointMake(currentPoint.x, currentPoint.y);
     if (command != nil) {
-        if (command.class == [IJSVGCommandCurve class] || command.class == self.class) {
-            if (command.class == [IJSVGCommandCurve class]) {
+        if ((command.command | 0x20) == 'c' || (command.command | 0x20) == 's') {
+            if ((command.command | 0x20) == 'c') {
                 if (command.type == kIJSVGCommandTypeAbsolute) {
                     firstControl = CGPointMake(-1 * command.parameters[2] + 2 * currentPoint.x, -1 * command.parameters[3] + 2 * currentPoint.y);
                 } else {

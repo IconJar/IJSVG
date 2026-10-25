@@ -13,6 +13,18 @@
 
 @implementation IJSVGRadialGradient
 
+// Allocation already supplies the class. A static identity
+// comparison here avoids object class queries in parsing and drawing, while
+// subclasses keep the general implementation.
++ (instancetype)allocWithZone:(NSZone*)zone
+{
+    IJSVGRadialGradient* instance = [super allocWithZone:zone];
+    if (self == IJSVGRadialGradient.class) {
+        IJSVGMarkBuiltInNode(instance, IJSVGNodeTypeRadialGradient);
+    }
+    return instance;
+}
+
 - (IJSVGNodeTypeTraits)nodeTraits
 {
     return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitGradient | IJSVGNodeTypeTraitRadialGradient;

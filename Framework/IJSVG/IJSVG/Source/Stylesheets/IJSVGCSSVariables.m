@@ -28,8 +28,32 @@ typedef struct {
     NSUInteger depth;
 } IJSVGCSSVariableContext;
 
+/// Reports whether a value may contain a var() reference or a CSS escape.
+/// Every character examined is ASCII, and multibyte UTF8 sequences never
+/// contain ASCII bytes, so scanning UTF16 units gives the same answer for
+/// short values without creating a converted copy of each attribute.
 BOOL IJSVGCSSValueMayContainVariables(NSString* value)
 {
+    NSUInteger length = value.length;
+    if (length <= 128) {
+        unichar characters[128];
+        [value getCharacters:characters range:NSMakeRange(0, length)];
+        for (NSUInteger index = 0; index < length; index++) {
+            unichar character = characters[index];
+
+            // The UTF8 scan ends at an embedded NUL, so this one does too.
+            if (character == 0) {
+                return NO;
+            }
+            if (character == '\\') {
+                return YES;
+            }
+            if ((character == 'v' || character == 'V') && index + 3 < length && (characters[index + 1] == 'a' || characters[index + 1] == 'A') && (characters[index + 2] == 'r' || characters[index + 2] == 'R') && characters[index + 3] == '(') {
+                return YES;
+            }
+        }
+        return NO;
+    }
     const char* bytes = value.UTF8String;
     if (bytes == NULL) {
         return NO;

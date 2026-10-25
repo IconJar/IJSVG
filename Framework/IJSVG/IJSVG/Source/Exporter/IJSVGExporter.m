@@ -21,6 +21,7 @@
 #import <IJSVGGradientPaint.h>
 #import <IJSVGGroupPaint.h>
 #import <IJSVGImagePaint.h>
+#import <IJSVGNodeParsing.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVGPatternPaint.h>
 #import <IJSVGQuartzRenderer.h>
@@ -30,7 +31,6 @@
 #import <IJSVGTextFontResolver.h>
 #import <IJSVGTransformPaint.h>
 #import <ImageIO/ImageIO.h>
-#import <objc/runtime.h>
 
 // Filter descriptions have a fixed name, attributes and ordered children layout.
 // Include every value so filters of the same size do not share a trivial hash.
@@ -52,44 +52,37 @@ static NSUInteger IJSVGExporterFilterContentHash(NSArray* description)
     return hash * 31U + childrenHash;
 }
 
-@interface IJSVGExporterFilterKey : NSObject <NSCopying>
-@property (nonatomic, readonly) NSArray* content;
-@property (nonatomic, readonly) NSUInteger contentHash;
-- (instancetype)initWithContent:(NSArray*)content;
-@end
+typedef struct {
+    CFTypeRef content;
+    NSUInteger hash;
+} IJSVGExporterFilterKey;
 
-@implementation IJSVGExporterFilterKey
-- (instancetype)initWithContent:(NSArray*)content
+static const void* IJSVGExporterFilterKeyRetain(CFAllocatorRef allocator, const void* value)
 {
-    if ((self = [super init])) {
-        _content = content.copy;
-        _contentHash = IJSVGExporterFilterContentHash(content);
+    IJSVGExporterFilterKey* copy = malloc(sizeof(*copy));
+    if (copy == NULL) {
+        [NSException raise:NSMallocException format:@"Unable to allocate filter key"];
     }
-    return self;
+    *copy = *(const IJSVGExporterFilterKey*)value;
+    CFRetain(copy->content);
+    return copy;
 }
 
-- (NSUInteger)hash
+static void IJSVGExporterFilterKeyRelease(CFAllocatorRef allocator, const void* value)
 {
-    return _contentHash;
+    CFRelease(((const IJSVGExporterFilterKey*)value)->content);
+    free((void*)value);
 }
 
-- (BOOL)isEqual:(id)object
+static CFHashCode IJSVGExporterFilterKeyHash(const void* value)
 {
-    if (object == self) {
-        return YES;
-    }
-    if (object_getClass(object) != IJSVGExporterFilterKey.class) {
-        return NO;
-    }
-    IJSVGExporterFilterKey* other = (IJSVGExporterFilterKey*)object;
-    return [_content isEqualToArray:other.content];
+    return ((const IJSVGExporterFilterKey*)value)->hash;
 }
 
-- (id)copyWithZone:(NSZone*)zone
+static Boolean IJSVGExporterFilterKeyEqual(const void* left, const void* right)
 {
-    return self;
+    return CFEqual(((const IJSVGExporterFilterKey*)left)->content, ((const IJSVGExporterFilterKey*)right)->content);
 }
-@end
 
 @interface IJSVGExporter () {
     IJSVGExportDocument* _dom;
@@ -97,12 +90,19 @@ static NSUInteger IJSVGExporterFilterContentHash(NSArray* description)
     IJSVGRootPaint* _rootPaint;
     IJSVGQuartzRenderer* _paintResolver;
     NSSet<IJSVGPaint*>* _outsideViewportPaints;
-    NSMutableDictionary<IJSVGExporterFilterKey*, NSString*>* _filterReferences;
+    CFMutableDictionaryRef _filterReferences;
 }
 
 @end
 
 @implementation IJSVGExporter
+
+- (void)dealloc
+{
+    if (_filterReferences != NULL) {
+        CFRelease(_filterReferences);
+    }
+}
 
 #define XML_DOC_VERSION 1.1f
 #define XML_DOC_NS @"http://www.w3.org/2000/svg"
@@ -380,7 +380,10 @@ NSString* IJSVGHash(NSString* key)
     _appliedXLink = NO;
     _dom = nil;
     _defElement = nil;
-    _filterReferences = nil;
+    if (_filterReferences != NULL) {
+        CFRelease(_filterReferences);
+    }
+    _filterReferences = NULL;
 
     // ask the root paint to resolve itself for the new size we want, this
     // will generate a new tree if required with the correct sizing and bounds.
@@ -846,7 +849,7 @@ NSString* IJSVGHash(NSString* key)
 - (IJSVGExportElement*)elementForPaint:(IJSVGPaint*)paint fromParent:(IJSVGExportElement*)element
 {
     // root paint
-    if (paint.class == IJSVGRootPaint.class) {
+    if ((paint.paintTraits & IJSVGPaintTraitRoot) != 0) {
         return [self elementForRoot:(IJSVGRootPaint*)paint fromParent:element];
     }
 
@@ -861,7 +864,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // group paint, or paint that acts as a group
-    if ((paint.paintTraits & IJSVGPaintTraitGroup) != 0 || paint.class == IJSVGTransformPaint.class || paint.class == IJSVGPaint.class) {
+    if ((paint.paintTraits & IJSVGPaintTraitGroup) != 0 || (paint.paintTraits & IJSVGPaintTraitTransform) != 0 || IJSVGGetBuiltInPaintKind(paint) == IJSVGBuiltInPaintBase) {
         return [self elementForGroup:paint fromParent:element];
     }
     return nil;
@@ -1048,7 +1051,7 @@ NSString* IJSVGHash(NSString* key)
 
     // x & y could be apart of a transform paint, if so, remove it
     CGAffineTransform transform = CGAffineTransformIdentity;
-    if (patternPaint.class == IJSVGTransformPaint.class) {
+    if ((patternPaint.paintTraits & IJSVGPaintTraitTransform) != 0) {
         transform = patternPaint.affineTransform;
         patternPaint = (IJSVGGroupPaint*)patternPaint.children.firstObject;
     }
@@ -1135,7 +1138,7 @@ NSString* IJSVGHash(NSString* key)
     IJSVGExportElement* gradientElement = [[IJSVGExportElement alloc] init];
 
     // work out linear gradient
-    if (gradient.class == IJSVGLinearGradient.class) {
+    if ((gradient.nodeTraits & IJSVGNodeTypeTraitRadialGradient) == 0) {
         IJSVGLinearGradient* lGradient = (IJSVGLinearGradient*)gradient;
         gradientElement.name = @"linearGradient";
         [gradientElement setAttributeWithName:IJSVGAttributeX1 stringValue:[lGradient.x1 stringValueWithFloatingPointOptions:_floatingPointOptions]];
@@ -1728,7 +1731,7 @@ NSString* IJSVGHash(NSString* key)
     // is there a gradient fill?
     IJSVGGradientPaint* gradientPaint = (IJSVGGradientPaint*)((paint.fillPaint.paintTraits & IJSVGPaintTraitGradient) != 0 ? paint.fillPaint : nil);
     if (paint.fillGradient != nil) {
-        gradientPaint = IJSVGGradientPaint.paint;
+        gradientPaint = ((IJSVGGradientPaint*)IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintGradient));
         gradientPaint.gradient = paint.fillGradient;
     }
     if (gradientPaint != nil) {
@@ -2331,8 +2334,11 @@ static BOOL IJSVGExporterFilterHasContextualImage(NSArray<IJSVGFilterPrimitive*>
     for (IJSVGFilterPrimitive* primitive in primitives) {
         [children addObject:[self descriptionForFilterPrimitive:primitive fromPaint:paint]];
     }
-    IJSVGExporterFilterKey* key = canReuse ? [[IJSVGExporterFilterKey alloc] initWithContent:@[ IJSVGAttributeFilter, attributes.copy, children.copy ]] : nil;
-    NSString* reference = canReuse ? _filterReferences[key] : nil;
+
+    // The stack key borrows this array until the dictionary has retained it.
+    __attribute__((objc_precise_lifetime)) NSArray* keyContent = canReuse ? @[ IJSVGAttributeFilter, attributes.copy, children.copy ] : nil;
+    IJSVGExporterFilterKey key = { (__bridge CFTypeRef)keyContent, canReuse ? IJSVGExporterFilterContentHash(keyContent) : 0 };
+    NSString* reference = canReuse && _filterReferences != NULL ? (__bridge NSString*)CFDictionaryGetValue(_filterReferences, &key) : nil;
     if (reference == nil) {
         if (definition == nil) {
             definition = [[IJSVGExportElement alloc] initWithName:IJSVGAttributeFilter];
@@ -2348,10 +2354,11 @@ static BOOL IJSVGExporterFilterHasContextualImage(NSArray<IJSVGFilterPrimitive*>
         [[self defElement] addChild:definition];
         reference = IJSVGHashURL(identifier);
         if (canReuse) {
-            if (_filterReferences == nil) {
-                _filterReferences = [[NSMutableDictionary alloc] init];
+            if (_filterReferences == NULL) {
+                CFDictionaryKeyCallBacks callbacks = { 0, IJSVGExporterFilterKeyRetain, IJSVGExporterFilterKeyRelease, NULL, IJSVGExporterFilterKeyEqual, IJSVGExporterFilterKeyHash };
+                _filterReferences = CFDictionaryCreateMutable(NULL, 0, &callbacks, &kCFTypeDictionaryValueCallBacks);
             }
-            _filterReferences[key] = reference;
+            CFDictionarySetValue(_filterReferences, &key, (__bridge CFStringRef)reference);
         }
     }
     [element setAttributeWithName:IJSVGAttributeFilter stringValue:reference];

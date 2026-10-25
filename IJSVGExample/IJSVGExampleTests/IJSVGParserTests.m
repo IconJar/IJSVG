@@ -15,6 +15,162 @@
 
 @implementation IJSVGParserTests
 
+- (void)testRepeatedGradientsAcrossXMLPagesSurviveReparseAndRelease
+{
+    NSMutableString* body = [NSMutableString stringWithString:@"<defs>"];
+    for (NSUInteger index = 0; index < 300; index++) {
+        for (NSUInteger padding = 0; padding < 4; padding++) {
+            [body appendString:@"<path/>"];
+        }
+        uint32_t rgba = index == 0 ? 0 : ((uint32_t)index * 0x010203U << 8) | 0xff;
+        [body appendFormat:@"<linearGradient id='g%lu' gradientUnits='userSpaceOnUse' x2='%lu'>"
+                            "<stop stop-color='#%08x'/><stop offset='1' stop-color='#abcdef'/></linearGradient>",
+            (unsigned long)index, (unsigned long)(index + 1), rgba];
+    }
+    [body appendString:@"</defs>"];
+    for (NSUInteger index = 0; index < 300; index++) {
+        for (NSUInteger use = 0; use < 4; use++) {
+            [body appendFormat:@"<rect width='8' height='8' fill='url(#g%lu)'/>", (unsigned long)index];
+        }
+    }
+    IJSVGRootNode* first;
+    IJSVGRootNode* second;
+    __weak IJSVGParser* weakParser;
+    @autoreleasepool {
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body) fileURL:nil error:nil];
+        weakParser = parser;
+        first = [parser rootNodeWithSize:CGSizeMake(8, 8)];
+        second = [parser rootNodeWithSize:CGSizeMake(16, 16)];
+    }
+    XCTAssertNil(weakParser);
+    XCTAssertNotNil(first);
+    XCTAssertNotNil(second);
+    if (first == nil || second == nil) {
+        return;
+    }
+    for (IJSVGRootNode* root in @[ first, second ]) {
+        XCTAssertEqual(root.children.count, 1200);
+        for (NSUInteger index = 0; index < root.children.count; index++) {
+            IJSVGLinearGradient* gradient = (id)((IJSVGGraphicsNode*)root.children[index]).fill;
+            XCTAssertTrue([gradient isKindOfClass:IJSVGLinearGradient.class]);
+            XCTAssertEqualWithAccuracy(gradient.x2.value, index / 4 + 1, .001);
+            XCTAssertEqual(gradient.numberOfStops, 2);
+            XCTAssertEqual(gradient.colors.count, 2);
+            uint32_t rgba = index / 4 == 0 ? 0 : ((uint32_t)(index / 4) * 0x010203U << 8) | 0xff;
+            CGColorRef expected = [IJSVGColor colorFromString:[NSString stringWithFormat:@"#%08x", rgba]];
+            XCTAssertTrue(CGColorEqualToColor((__bridge CGColorRef)gradient.colors.firstObject, expected));
+            XCTAssertNotEqual(gradient.CGGradient, NULL);
+        }
+    }
+}
+
+- (void)testStructuralSelectorsCountNamespacesAndSkipText
+{
+    NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' xmlns:foreign='urn:foreign' width='8' height='8'>"
+                        "<style>rect:nth-of-type(2) {opacity:.25} rect:nth-last-of-type(1) {fill-opacity:.5} "
+                        "rect:nth-child(4) {stroke-opacity:.75}</style>"
+                        "<g><rect id='first'/><foreign:rect/><circle/>text<rect id='second'/><rect id='last'/></g></svg>";
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
+    IJSVGGroup* group = (id)svg.rootNode.children.firstObject;
+    NSUInteger matched = 0;
+    for (IJSVGGraphicsNode* node in group.children) {
+        if ([node.identifier isEqualToString:@"first"]) {
+            XCTAssertEqualWithAccuracy(node.opacity.value, 1, .001);
+            matched++;
+        } else if ([node.identifier isEqualToString:@"second"]) {
+            XCTAssertEqualWithAccuracy(node.opacity.value, .25, .001);
+            XCTAssertEqualWithAccuracy(node.strokeOpacity.value, .75, .001);
+            matched++;
+        } else if ([node.identifier isEqualToString:@"last"]) {
+            XCTAssertEqualWithAccuracy(node.fillOpacity.value, .5, .001);
+            matched++;
+        }
+    }
+    XCTAssertEqual(matched, 3);
+}
+
+- (void)testRepeatedReferenceAttributesSurviveReparseAndParserRelease
+{
+    IJSVGRootNode* firstRoot;
+    IJSVGRootNode* secondRoot;
+    __weak IJSVGParser* weakParser;
+    @autoreleasepool {
+        NSString* body = @"<defs><rect id='shared-rectangle' class='cached-shape' width='8' height='8' fill='#123456'/></defs>"
+                          "<use href='#shared-rectangle'/><use href='#shared-rectangle'/><use href='#shared-rectangle'/>";
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body) fileURL:nil error:nil];
+        weakParser = parser;
+        firstRoot = [parser rootNodeWithSize:CGSizeMake(8, 8)];
+        secondRoot = [parser rootNodeWithSize:CGSizeMake(16, 16)];
+    }
+    XCTAssertNil(weakParser);
+    for (IJSVGRootNode* root in @[ firstRoot, secondRoot ]) {
+        XCTAssertEqual(root.children.count, 3);
+        for (IJSVGGroup* use in root.children) {
+            IJSVGNode* shape = use.children.firstObject;
+            XCTAssertEqualObjects(shape.identifier, @"shared-rectangle");
+            XCTAssertTrue([shape.classNameList containsObject:@"cached-shape"]);
+            XCTAssertEqual(shape.parentNode, use);
+        }
+        IJSVG* svg = [[IJSVG alloc] initWithRootNode:root];
+        CGImageRef image = [svg newCGImageRefWithSize:CGSizeMake(16, 16) flipped:NO error:nil];
+        XCTAssertNotEqual(image, NULL);
+        CGImageRelease(image);
+    }
+}
+
+- (void)testCyclicGradientChainsSurviveReparseAndRelease
+{
+    NSMutableString* body = [NSMutableString stringWithString:@"<defs>"];
+    for (NSUInteger index = 0; index < 32; index++) {
+        [body appendFormat:@"<linearGradient id='g%lu' href='#g%lu' x2='.75'>",
+            (unsigned long)index, (unsigned long)((index + 1) % 32)];
+        if (index == 31) {
+            [body appendString:@"<stop stop-color='red'/><stop offset='1' stop-color='blue'/>"];
+        }
+        [body appendString:@"</linearGradient>"];
+    }
+    [body appendString:@"</defs>"];
+    for (NSUInteger index = 0; index < 4; index++) {
+        [body appendString:@"<rect width='8' height='8' fill='url(#g0)'/>"];
+    }
+    IJSVGRootNode* first;
+    IJSVGRootNode* second;
+    @autoreleasepool {
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body) fileURL:nil error:nil];
+        first = [parser rootNodeWithSize:CGSizeMake(8, 8)];
+        second = [parser rootNodeWithSize:CGSizeMake(16, 16)];
+    }
+    XCTAssertNotNil(first);
+    XCTAssertNotNil(second);
+    if (first == nil || second == nil) {
+        return;
+    }
+    for (IJSVGRootNode* root in @[ first, second ]) {
+        XCTAssertEqual(root.children.count, 4);
+        for (IJSVGGraphicsNode* shape in root.children) {
+            IJSVGLinearGradient* gradient = (id)shape.fill;
+            XCTAssertTrue([gradient isKindOfClass:IJSVGLinearGradient.class]);
+            XCTAssertEqualWithAccuracy(gradient.x2.value, .75, .001);
+            XCTAssertEqual(gradient.numberOfStops, 2);
+            XCTAssertNotEqual(gradient.CGGradient, NULL);
+        }
+    }
+}
+
+- (void)testLargeOverlappingSelectorIndexesPreserveCascadeOrder
+{
+    NSMutableString* body = [NSMutableString stringWithString:@"<style>"];
+    for (NSUInteger index = 1; index <= 80; index++) {
+        [body appendFormat:@"#target, .item {opacity:%.2f;fill:#123456}", index / 100.0];
+    }
+    [body appendString:@"</style><rect id='target' class='item' width='8' height='8'/>"];
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:IJSVGTestSVG(body)];
+    IJSVGGraphicsNode* node = (id)svg.rootNode.children.firstObject;
+    XCTAssertNotNil(node);
+    XCTAssertEqualWithAccuracy(node.opacity.value, .8, .0001);
+    XCTAssertTrue(CGColorEqualToColor(((IJSVGColorNode*)node.fill).color, [IJSVGColor colorFromString:@"#123456"]));
+}
+
 - (void)testForeignRootIsNotAnSVGDocument
 {
     NSData* data = [@"<svg xmlns='urn:private' width='10' height='10'/>" dataUsingEncoding:NSUTF8StringEncoding];

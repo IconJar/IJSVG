@@ -9,57 +9,67 @@
 #import <IJSVGGradientGeometry.h>
 #import <IJSVGParserUtils.h>
 
-@implementation IJSVGGradientGeometry {
-    IJSVGUnitLength* _coordinates[6];
-    IJSVGGradientSpreadMethod _spreadMethod;
-}
-
-- (instancetype)initWithLinearGradient:(IJSVGLinearGradient*)gradient
+IJSVGGradientGeometry* IJSVGGradientGeometryCreateLinear(IJSVGLinearGradient* gradient)
 {
-    if ((self = [super init]) != nil) {
-        _units = gradient.units;
-        _spreadMethod = gradient.spreadMethod;
-        _coordinates[0] = gradient.x1;
-        _coordinates[1] = gradient.x2;
-        _coordinates[2] = gradient.y1;
-        _coordinates[3] = gradient.y2;
+    IJSVGGradientGeometry* geometry = calloc(1, sizeof(*geometry));
+    if (geometry == NULL) {
+        return NULL;
     }
-    return self;
+    geometry->units = gradient.units;
+    geometry->spreadMethod = gradient.spreadMethod;
+    geometry->coordinates[0] = CFBridgingRetain(gradient.x1);
+    geometry->coordinates[1] = CFBridgingRetain(gradient.x2);
+    geometry->coordinates[2] = CFBridgingRetain(gradient.y1);
+    geometry->coordinates[3] = CFBridgingRetain(gradient.y2);
+    return geometry;
 }
 
-- (instancetype)initWithRadialGradient:(IJSVGRadialGradient*)gradient
+void IJSVGGradientGeometryApplyLinear(const IJSVGGradientGeometry* geometry, IJSVGLinearGradient* gradient)
 {
-    if ((self = [super init]) != nil) {
-        _units = gradient.units;
-        _spreadMethod = gradient.spreadMethod;
-        _coordinates[0] = gradient.cx;
-        _coordinates[1] = gradient.cy;
-        _coordinates[2] = gradient.r;
-        _coordinates[3] = gradient.fx;
-        _coordinates[4] = gradient.fy;
-        _coordinates[5] = gradient.fr;
+    gradient.x1 = (__bridge IJSVGUnitLength*)geometry->coordinates[0];
+    gradient.x2 = (__bridge IJSVGUnitLength*)geometry->coordinates[1];
+    gradient.y1 = (__bridge IJSVGUnitLength*)geometry->coordinates[2];
+    gradient.y2 = (__bridge IJSVGUnitLength*)geometry->coordinates[3];
+    gradient.spreadMethod = geometry->spreadMethod;
+}
+
+IJSVGGradientGeometry* IJSVGGradientGeometryCreateRadial(IJSVGRadialGradient* gradient)
+{
+    IJSVGGradientGeometry* geometry = calloc(1, sizeof(*geometry));
+    if (geometry == NULL) {
+        return NULL;
     }
-    return self;
+    geometry->units = gradient.units;
+    geometry->spreadMethod = gradient.spreadMethod;
+    geometry->coordinates[0] = CFBridgingRetain(gradient.cx);
+    geometry->coordinates[1] = CFBridgingRetain(gradient.cy);
+    geometry->coordinates[2] = CFBridgingRetain(gradient.r);
+    geometry->coordinates[3] = CFBridgingRetain(gradient.fx);
+    geometry->coordinates[4] = CFBridgingRetain(gradient.fy);
+    geometry->coordinates[5] = CFBridgingRetain(gradient.fr);
+    return geometry;
 }
 
-- (void)applyToLinearGradient:(IJSVGLinearGradient*)gradient
+void IJSVGGradientGeometryApplyRadial(const IJSVGGradientGeometry* geometry, IJSVGRadialGradient* gradient)
 {
-    gradient.x1 = _coordinates[0];
-    gradient.x2 = _coordinates[1];
-    gradient.y1 = _coordinates[2];
-    gradient.y2 = _coordinates[3];
-    gradient.spreadMethod = _spreadMethod;
+    gradient.cx = (__bridge IJSVGUnitLength*)geometry->coordinates[0];
+    gradient.cy = (__bridge IJSVGUnitLength*)geometry->coordinates[1];
+    gradient.r = (__bridge IJSVGUnitLength*)geometry->coordinates[2];
+    gradient.fx = (__bridge IJSVGUnitLength*)geometry->coordinates[3];
+    gradient.fy = (__bridge IJSVGUnitLength*)geometry->coordinates[4];
+    gradient.fr = (__bridge IJSVGUnitLength*)geometry->coordinates[5];
+    gradient.spreadMethod = geometry->spreadMethod;
 }
 
-- (void)applyToRadialGradient:(IJSVGRadialGradient*)gradient
+void IJSVGGradientGeometryDestroy(IJSVGGradientGeometry* geometry)
 {
-    gradient.cx = _coordinates[0];
-    gradient.cy = _coordinates[1];
-    gradient.r = _coordinates[2];
-    gradient.fx = _coordinates[3];
-    gradient.fy = _coordinates[4];
-    gradient.fr = _coordinates[5];
-    gradient.spreadMethod = _spreadMethod;
+    if (geometry == NULL) {
+        return;
+    }
+    for (NSUInteger index = 0; index < 6; index++) {
+        if (geometry->coordinates[index] != NULL) {
+            CFRelease(geometry->coordinates[index]);
+        }
+    }
+    free(geometry);
 }
-
-@end

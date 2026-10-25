@@ -72,15 +72,29 @@ typedef struct {
 
 void IJSVGApplyDeferredAttributes(const IJSVGNodeDeferredAttributes* attributes, IJSVGNode* node, IJSVGParser* parser, IJSVGXMLNode* element);
 
+typedef struct {
+    IJSVGNodeAttribute attribute;
+    CFStringRef value;
+    CFTypeRef length;
+} IJSVGGeometryLengthCacheEntry;
+
+typedef struct {
+    IJSVGGeometryLengthCacheEntry* entries;
+    NSUInteger count;
+} IJSVGGeometryLengthCache;
+
+void IJSVGGeometryLengthCacheDestroy(IJSVGGeometryLengthCache* cache);
+
 // Resolved values live on the parser stack for the duration of consumption.
 // Nodes retain only the values they use.
 typedef struct {
     uint64_t textAttributes;
     __unsafe_unretained IJSVGReference* reference;
-    __unsafe_unretained NSMutableDictionary<NSNumber*, IJSVGUnitLength*>* cachedGeometryLengths;
-    __unsafe_unretained NSMutableDictionary<NSNumber*, NSString*>* cachedGeometryValues;
+    IJSVGGeometryLengthCache* cachedGeometry;
     __unsafe_unretained IJSVGGraphicsNode* geometryOwner;
-    __strong NSMutableDictionary<NSNumber*, IJSVGUnitLength*>* geometryLengths;
+    NSUInteger geometryLengthCount;
+    NSUInteger geometryAttributes[9];
+    CFTypeRef geometryLengths[9];
     __unsafe_unretained IJSVGParser* parser;
     IJSVGXMLNode* element;
     NSString* __unsafe_unretained* values;
@@ -136,7 +150,15 @@ typedef struct {
 - (void)applyMarkerStart:(NSString*)start mid:(NSString*)mid end:(NSString*)end toNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element;
 @end
 
-BOOL IJSVGParserAttributeHasValue(NSString* __unsafe_unretained const* values, IJSVGNodeAttribute attribute, NSString* __strong* value);
+static inline BOOL IJSVGParserAttributeHasValue(NSString* __unsafe_unretained const* values, IJSVGNodeAttribute attribute, NSString* __strong* value)
+{
+    NSString* __unsafe_unretained candidate = values[attribute];
+    if (candidate == nil || candidate.length == 0) {
+        return NO;
+    }
+    *value = candidate;
+    return YES;
+}
 
 IJSVGBitFlags* IJSVGCommonAttributes(void);
 IJSVGBitFlags* IJSVGGraphicsAttributes(void);
@@ -191,8 +213,22 @@ void IJSVGParseMarkersAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContex
 - (instancetype)initWithParameterStateFromPrimitive:(IJSVGFilterPrimitive*)source;
 @end
 
-// Advances whenever a style parent link, a parent link or an inherited color
-// interpolation value may have changed, including when a node is freed.
-// Readers may cache inherited values while the generation is unchanged.
-uint64_t IJSVGNodeInheritanceGeneration(void);
-void IJSVGNodeInvalidateInheritance(void);
+void IJSVGPublishGeometryLengths(IJSVGNodeParsingContext* context);
+void IJSVGReleaseGeometryLengths(IJSVGNodeParsingContext* context);
+
+static const IJSVGNodeType IJSVGBuiltInColorNodeType = (IJSVGNodeType)254;
+
+// Only known library factories opt into paths that bypass virtual methods.
+static inline IJSVGNodeType IJSVGBuiltInNodeType(IJSVGNode* node)
+{
+    return node != nil && node->_builtInNodeType != 0 ? (IJSVGNodeType)(node->_builtInNodeType - 1) : IJSVGNodeTypeNotFound;
+}
+
+static inline void IJSVGMarkBuiltInNode(IJSVGNode* node, IJSVGNodeType type)
+{
+    if (node != nil) {
+        node->_builtInNodeType = (uint8_t)(type + 1);
+    }
+}
+
+IJSVGBitFlags* IJSVGBuiltInAllowedAttributes(IJSVGNodeType type);

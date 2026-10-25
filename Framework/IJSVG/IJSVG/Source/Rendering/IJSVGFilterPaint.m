@@ -20,6 +20,7 @@
 #import <IJSVGFilterGraph.h>
 #import <IJSVGFilterPaint.h>
 #import <IJSVGFilterSIMD.h>
+#import <IJSVGNodeParsing.h>
 #import <IJSVGPatternPaint.h>
 #import <IJSVGQuartzRenderer.h>
 #import <Metal/Metal.h>
@@ -652,12 +653,12 @@ static IJSVGNode* IJSVGFilterSnapshotImagePaint(IJSVGNode* source)
     if (!IJSVGFilterImageNodeIsIndependent(source)) {
         return nil;
     }
-    if ([source isMemberOfClass:IJSVGColorNode.class]) {
+    if ((IJSVGBuiltInNodeType(source) == IJSVGBuiltInColorNodeType)) {
         IJSVGColorNode* copy = source.copy;
         IJSVGFilterDetachImageValues(copy, source);
         return copy;
     }
-    if (![source isMemberOfClass:IJSVGLinearGradient.class] && ![source isMemberOfClass:IJSVGRadialGradient.class]) {
+    if (!(IJSVGBuiltInNodeType(source) == IJSVGNodeTypeLinearGradient) && !(IJSVGBuiltInNodeType(source) == IJSVGNodeTypeRadialGradient)) {
         return nil;
     }
     if (((IJSVGGradient*)source).viewBox != nil) {
@@ -665,9 +666,11 @@ static IJSVGNode* IJSVGFilterSnapshotImagePaint(IJSVGNode* source)
     }
 
     // Only resolved gradient values are used for drawing this private snapshot.
-    IJSVGGradient* copy = [[source.class alloc] init];
+    IJSVGNodeType kind = IJSVGBuiltInNodeType(source);
+    IJSVGGradient* copy = kind == IJSVGNodeTypeLinearGradient ? [[IJSVGLinearGradient alloc] init] : [[IJSVGRadialGradient alloc] init];
+    IJSVGMarkBuiltInNode(copy, kind);
     [copy applyPropertiesFromNode:(IJSVGGradient*)source];
-    if ([source isMemberOfClass:IJSVGRadialGradient.class]) {
+    if ((IJSVGBuiltInNodeType(source) == IJSVGNodeTypeRadialGradient)) {
         IJSVGRadialGradient* radialSource = (IJSVGRadialGradient*)source;
         IJSVGRadialGradient* radialCopy = (IJSVGRadialGradient*)copy;
         radialCopy.cx = radialSource.cx.copy;
@@ -684,8 +687,8 @@ static IJSVGNode* IJSVGFilterSnapshotImagePaint(IJSVGNode* source)
 
 static BOOL IJSVGFilterImageIsBuiltinPath(IJSVGNode* node)
 {
-    Class type = node.class;
-    return type == IJSVGPath.class || type == IJSVGRect.class || type == IJSVGCircle.class || type == IJSVGEllipse.class || type == IJSVGLine.class || type == IJSVGPolygon.class || type == IJSVGPolyline.class;
+    IJSVGNodeType type = IJSVGBuiltInNodeType(node);
+    return type == IJSVGNodeTypePath || type == IJSVGNodeTypeRect || type == IJSVGNodeTypeCircle || type == IJSVGNodeTypeEllipse || type == IJSVGNodeTypeLine || type == IJSVGNodeTypePolygon || type == IJSVGNodeTypePolyline;
 }
 
 /// Snapshots a plain vector image while leaving unsupported inputs on the live

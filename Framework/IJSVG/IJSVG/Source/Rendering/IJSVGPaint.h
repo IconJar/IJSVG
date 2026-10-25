@@ -33,8 +33,25 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
     IJSVGPaintDrawingOptionIgnoreClipping = 1 << 1
 };
 
+typedef NS_ENUM(uint8_t, IJSVGBuiltInPaintKind) {
+    IJSVGBuiltInPaintCustom = 0,
+    IJSVGBuiltInPaintBase,
+    IJSVGBuiltInPaintGroup,
+    IJSVGBuiltInPaintTransform,
+    IJSVGBuiltInPaintShape,
+    IJSVGBuiltInPaintRect,
+    IJSVGBuiltInPaintStroke,
+    IJSVGBuiltInPaintRoot,
+    IJSVGBuiltInPaintGradient,
+    IJSVGBuiltInPaintPattern,
+    IJSVGBuiltInPaintImage,
+};
+
 // Resolved drawing data. Paints own CG resources and never allocate CA objects.
-@interface IJSVGPaint : NSObject
+@interface IJSVGPaint : NSObject {
+@package
+    IJSVGBuiltInPaintKind _builtInPaintKind;
+}
 
 @property (nonatomic, strong) IJSVGGraphicsNode* sourceNode;
 
@@ -109,3 +126,10 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 @end
 
 CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint);
+
+IJSVGPaint* IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintKind kind);
+
+static inline IJSVGBuiltInPaintKind IJSVGGetBuiltInPaintKind(IJSVGPaint* paint)
+{
+    return paint != nil ? paint->_builtInPaintKind : IJSVGBuiltInPaintCustom;
+}

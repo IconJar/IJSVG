@@ -88,12 +88,14 @@
         return;
     }
 
-    if (child.parentNode == self && [_children containsObject:child]) {
+    // Read the current parent once. Parsing adds every node through here.
+    IJSVGGraphicsNode* parent = child.parentNode;
+    if (parent == self && [_children containsObject:child]) {
         return;
     }
 
-    if ((child.parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0 && child.parentNode != self) {
-        [(IJSVGGroup*)child.parentNode removeChild:child];
+    if ((parent.nodeTraits & IJSVGNodeTypeTraitGroup) != 0 && parent != self) {
+        [(IJSVGGroup*)parent removeChild:child];
     }
 
     child.parentNode = self;

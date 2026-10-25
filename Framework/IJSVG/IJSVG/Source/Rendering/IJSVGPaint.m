@@ -13,6 +13,7 @@
 #import <IJSVGFilterPaint.h>
 #import <IJSVGGradientPaint.h>
 #import <IJSVGGroupPaint.h>
+#import <IJSVGImagePaint.h>
 #import <IJSVGPaint.h>
 #import <IJSVGPatternPaint.h>
 #import <IJSVGRectPaint.h>
@@ -63,7 +64,60 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 @end
 
+IJSVGPaint* IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintKind kind)
+{
+    IJSVGPaint* paint = nil;
+    switch (kind) {
+        case IJSVGBuiltInPaintBase:
+            paint = [[IJSVGPaint alloc] init];
+            break;
+        case IJSVGBuiltInPaintGroup:
+            paint = [[IJSVGGroupPaint alloc] init];
+            break;
+        case IJSVGBuiltInPaintTransform:
+            paint = [[IJSVGTransformPaint alloc] init];
+            break;
+        case IJSVGBuiltInPaintShape:
+            paint = [[IJSVGShapePaint alloc] init];
+            break;
+        case IJSVGBuiltInPaintRect:
+            paint = [[IJSVGRectPaint alloc] init];
+            break;
+        case IJSVGBuiltInPaintStroke:
+            paint = [[IJSVGStrokePaint alloc] init];
+            break;
+        case IJSVGBuiltInPaintRoot:
+            paint = [[IJSVGRootPaint alloc] init];
+            break;
+        case IJSVGBuiltInPaintGradient:
+            paint = [[IJSVGGradientPaint alloc] init];
+            break;
+        case IJSVGBuiltInPaintPattern:
+            paint = [[IJSVGPatternPaint alloc] init];
+            break;
+        case IJSVGBuiltInPaintImage:
+            paint = [[IJSVGImagePaint alloc] init];
+            break;
+        default:
+            return nil;
+    }
+    paint->_builtInPaintKind = kind;
+    return paint;
+}
+
 @implementation IJSVGPaint
+
+// Allocation already supplies the class. A static identity
+// comparison here avoids object class queries in parsing and drawing, while
+// subclasses keep the general implementation.
++ (instancetype)allocWithZone:(NSZone*)zone
+{
+    IJSVGPaint* instance = [super allocWithZone:zone];
+    if (self == IJSVGPaint.class) {
+        instance->_builtInPaintKind = IJSVGBuiltInPaintBase;
+    }
+    return instance;
+}
 
 @synthesize frame = _frame;
 
@@ -93,8 +147,8 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 - (IJSVGPaint*)copyForMarker
 {
-    Class type = self.class;
-    if ((type != IJSVGPaint.class && type != IJSVGGroupPaint.class && type != IJSVGTransformPaint.class && type != IJSVGShapePaint.class && type != IJSVGRectPaint.class && type != IJSVGStrokePaint.class) || _maskPaint != nil || _clipPaints.count != 0 || _sourceNode.clipPath != nil || (_sourceNode.nodeTraits & IJSVGNodeTypeTraitText) != 0 || (_sourceNode != nil && !CGRectIsNull(_sourceNode.backgroundRect))) {
+    IJSVGBuiltInPaintKind kind = _builtInPaintKind;
+    if ((kind < IJSVGBuiltInPaintBase || kind > IJSVGBuiltInPaintStroke) || _maskPaint != nil || _clipPaints.count != 0 || _sourceNode.clipPath != nil || (_sourceNode.nodeTraits & IJSVGNodeTypeTraitText) != 0 || (_sourceNode != nil && !CGRectIsNull(_sourceNode.backgroundRect))) {
         return nil;
     }
     NSArray<IJSVGPaint*>* children = @[];
@@ -116,7 +170,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         children = copies.copy;
     }
 
-    IJSVGPaint* copy = [[type alloc] init];
+    IJSVGPaint* copy = IJSVGCreateBuiltInPaint(kind);
     copy->_sourceNode = _sourceNode;
     copy->_viewPort = _viewPort;
     copy->_frame = _frame;
@@ -469,7 +523,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     // restore their own state, so avoid a Quartz state stack entry per wrapper.
     // Restrict placement to an actual zero frame to preserve floating point
     // rounding for translated or centred geometry.
-    if (self.class == IJSVGGroupPaint.class && _opacity == 1.f && !_isolated && _blendingMode == kCGBlendModeNormal && _clipPath == NULL && _maskPaint == nil && _clipPaints.count == 0 && (_sourceNode == nil || CGRectIsNull(_sourceNode.backgroundRect)) && (!applyingPlacement || (CGRectEqualToRect(_frame, CGRectZero) && CGAffineTransformIsIdentity(_affineTransform)))) {
+    if (_builtInPaintKind == IJSVGBuiltInPaintGroup && _opacity == 1.f && !_isolated && _blendingMode == kCGBlendModeNormal && _clipPath == NULL && _maskPaint == nil && _clipPaints.count == 0 && (_sourceNode == nil || CGRectIsNull(_sourceNode.backgroundRect)) && (!applyingPlacement || (CGRectEqualToRect(_frame, CGRectZero) && CGAffineTransformIsIdentity(_affineTransform)))) {
         [self drawContentsInContext:ctx];
         return;
     }

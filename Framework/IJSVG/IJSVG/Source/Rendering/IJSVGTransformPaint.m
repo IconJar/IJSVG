@@ -10,6 +10,18 @@
 
 @implementation IJSVGTransformPaint
 
+// Allocation already supplies the class. A static identity
+// comparison here avoids object class queries in parsing and drawing, while
+// subclasses keep the general implementation.
++ (instancetype)allocWithZone:(NSZone*)zone
+{
+    IJSVGTransformPaint* instance = [super allocWithZone:zone];
+    if (self == IJSVGTransformPaint.class) {
+        instance->_builtInPaintKind = IJSVGBuiltInPaintTransform;
+    }
+    return instance;
+}
+
 - (IJSVGPaintTraits)paintTraits
 {
     return IJSVGPaintTraitTransform;

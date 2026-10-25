@@ -9,8 +9,33 @@
 #import <AppKit/AppKit.h>
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGGradient.h>
+#import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGTransform.h>
+#import <IJSVGGradientPaint.h>
 #import <XCTest/XCTest.h>
+
+@interface IJSVGDynamicInterpolationGradient : IJSVGLinearGradient
+@property (nonatomic) IJSVGColorInterpolation suppliedInterpolation;
+@end
+
+@implementation IJSVGDynamicInterpolationGradient
+- (IJSVGColorInterpolation)resolvedColorInterpolation
+{
+    return self.suppliedInterpolation;
+}
+@end
+
+@interface IJSVGCustomDrawingGradient : IJSVGLinearGradient
+@property (nonatomic) NSUInteger drawCount;
+@end
+
+@implementation IJSVGCustomDrawingGradient
+- (void)drawInContextRef:(CGContextRef)context bounds:(CGRect)bounds transform:(CGAffineTransform)transform
+{
+    self.drawCount++;
+    [super drawInContextRef:context bounds:bounds transform:transform];
+}
+@end
 
 @interface IJSVGGradientGeometryTests : XCTestCase
 @end
@@ -51,6 +76,122 @@
     NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:width * height * 4];
     CGContextRelease(context);
     return pixels;
+}
+
+- (NSData*)pixelsForGradientPaint:(IJSVGGradientPaint*)paint
+{
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef context = CGBitmapContextCreate(NULL, 32, 32, 8, 128, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(space);
+    XCTAssertTrue(context != NULL);
+    if (context == NULL) {
+        return nil;
+    }
+    IJSVGPaint* owner = [[IJSVGPaint alloc] init];
+    owner.frame = CGRectMake(0, 0, 32, 32);
+    owner.children = @[ paint ];
+    [paint drawInContext:context];
+    owner.children = @[];
+    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:32 * 128];
+    CGContextRelease(context);
+    return pixels;
+}
+
+- (void)testPreparedGradientRetainsStopsAndResetsOnAssignment
+{
+    IJSVGLinearGradient* gradient = [[IJSVGLinearGradient alloc] init];
+    gradient.colors = @[ (__bridge id)NSColor.redColor.CGColor, (__bridge id)NSColor.blueColor.CGColor ];
+    gradient.numberOfStops = 2;
+    IJSVGGradientPaint* paint = [[IJSVGGradientPaint alloc] init];
+    paint.frame = CGRectMake(0, 0, 32, 32);
+    paint.gradient = gradient;
+    NSData* before = [self pixelsForGradientPaint:paint];
+    XCTAssertNotNil(before);
+
+    // Editing the node releases its CGGradient. The prepared paint owns its
+    // snapshot until it is rebuilt or explicitly assigned a gradient again.
+    gradient.colors = @[ (__bridge id)NSColor.greenColor.CGColor, (__bridge id)NSColor.yellowColor.CGColor ];
+    XCTAssertEqualObjects([self pixelsForGradientPaint:paint], before);
+    paint.gradient = gradient;
+    NSData* after = [self pixelsForGradientPaint:paint];
+    XCTAssertNotEqualObjects(after, before);
+    IJSVGGradientPaint* fresh = [[IJSVGGradientPaint alloc] init];
+    fresh.frame = paint.frame;
+    fresh.gradient = gradient;
+    XCTAssertEqualObjects(after, [self pixelsForGradientPaint:fresh]);
+
+    paint.gradient = nil;
+    NSData* empty = [self pixelsForGradientPaint:paint];
+    XCTAssertEqualObjects(empty, [NSMutableData dataWithLength:32 * 128]);
+}
+
+- (void)testCustomGradientDrawingIsNotBypassedByPreparedPaint
+{
+    IJSVGCustomDrawingGradient* gradient = [[IJSVGCustomDrawingGradient alloc] init];
+    gradient.colors = @[ (__bridge id)NSColor.redColor.CGColor, (__bridge id)NSColor.blueColor.CGColor ];
+    gradient.numberOfStops = 2;
+    IJSVGGradientPaint* paint = [[IJSVGGradientPaint alloc] init];
+    paint.frame = CGRectMake(0, 0, 32, 32);
+    paint.gradient = gradient;
+    XCTAssertNotNil([self pixelsForGradientPaint:paint]);
+    XCTAssertNotNil([self pixelsForGradientPaint:paint]);
+    XCTAssertEqual(gradient.drawCount, 2);
+    IJSVGCustomDrawingGradient* copy = gradient.copy;
+    paint.gradient = copy;
+    XCTAssertNotNil([self pixelsForGradientPaint:paint]);
+    XCTAssertEqual(copy.drawCount, 1);
+}
+
+- (void)testCustomGradientInterpolationRemainsDynamic
+{
+    IJSVGDynamicInterpolationGradient* gradient = [[IJSVGDynamicInterpolationGradient alloc] init];
+    gradient.colors = @[ (__bridge id)NSColor.redColor.CGColor, (__bridge id)NSColor.blueColor.CGColor ];
+    gradient.numberOfStops = 2;
+    gradient.suppliedInterpolation = IJSVGColorInterpolationSRGB;
+    IJSVGGradientPaint* paint = [[IJSVGGradientPaint alloc] init];
+    paint.frame = CGRectMake(0, 0, 32, 32);
+    paint.gradient = gradient;
+    NSData* srgb = [self pixelsForGradientPaint:paint];
+    gradient.suppliedInterpolation = IJSVGColorInterpolationLinearRGB;
+    XCTAssertNotEqualObjects([self pixelsForGradientPaint:paint], srgb);
+    gradient.suppliedInterpolation = IJSVGColorInterpolationSRGB;
+    XCTAssertEqualObjects([self pixelsForGradientPaint:paint], srgb);
+}
+
+- (void)testInvalidationRefreshesInheritedInterpolationAndStops
+{
+    NSString* direct = @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>"
+                        "<defs><linearGradient id='g'><stop stop-color='red'/>"
+                        "<stop offset='1' stop-color='blue'/></linearGradient></defs>"
+                        "<path d='M0 0H32V32H0Z' fill='url(#g)'/></svg>";
+    for (NSString* document in @[ [self documentWithRadialGradient:NO userSpace:YES],
+             [self documentWithRadialGradient:YES
+                                    userSpace:YES],
+             direct ]) {
+        IJSVG* reused = [[IJSVG alloc] initWithSVGString:document];
+        IJSVG* fresh = [[IJSVG alloc] initWithSVGString:document];
+        CGSize size = CGSizeMake(64, 64);
+        NSData* before = [self render:reused size:size scale:1.f];
+        IJSVGGradient* gradient = (IJSVGGradient*)((IJSVGGraphicsNode*)reused.rootNode.children.firstObject).fill;
+        IJSVGGradient* freshGradient = (IJSVGGradient*)((IJSVGGraphicsNode*)fresh.rootNode.children.firstObject).fill;
+        IJSVGGroup* parent = [[IJSVGGroup alloc] init];
+        gradient.styleParent = parent;
+        freshGradient.styleParent = parent;
+        parent.colorInterpolation = IJSVGColorInterpolationLinearRGB;
+        [reused setNeedsDisplay];
+        NSData* linear = [self render:reused size:size scale:1.f];
+        XCTAssertNotEqualObjects(linear, before);
+        XCTAssertEqualObjects(linear, [self render:fresh size:size scale:1.f]);
+
+        gradient.colors = freshGradient.colors = @[ (__bridge id)NSColor.greenColor.CGColor, (__bridge id)NSColor.yellowColor.CGColor ];
+        gradient.numberOfStops = freshGradient.numberOfStops = 2;
+        gradient.locations = freshGradient.locations = NULL;
+        [reused setNeedsDisplay];
+        [fresh setNeedsDisplay];
+        NSData* changed = [self render:reused size:size scale:1.f];
+        XCTAssertNotEqualObjects(changed, linear);
+        XCTAssertEqualObjects(changed, [self render:fresh size:size scale:1.f]);
+    }
 }
 
 - (void)testGradientGeometryMatchesFreshRenderingAfterResize

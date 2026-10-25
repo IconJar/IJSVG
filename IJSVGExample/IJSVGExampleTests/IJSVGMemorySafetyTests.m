@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGGradient.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVGPaint.h>
 #import <XCTest/XCTest.h>
 #include <dlfcn.h>
 
@@ -17,6 +18,33 @@
 @end
 
 @implementation IJSVGMemorySafetyTests
+
+- (void)testDirectParentPaintLinkClearsWhenParentIsReleased
+{
+    IJSVGPaint* child = [[IJSVGPaint alloc] init];
+    __weak IJSVGPaint* weakParent;
+    @autoreleasepool {
+        IJSVGPaint* parent = [[IJSVGPaint alloc] init];
+        weakParent = parent;
+        child.parentPaint = parent;
+        XCTAssertEqual(child.parentPaint, parent);
+    }
+    XCTAssertNil(weakParent);
+    XCTAssertNil(child.parentPaint);
+    XCTAssertNil(child.referencingPaint);
+}
+
+- (void)testRetainedChildClearsParentLinkWhenParentIsReleased
+{
+    IJSVGPaint* child = [[IJSVGPaint alloc] init];
+    @autoreleasepool {
+        IJSVGPaint* parent = [[IJSVGPaint alloc] init];
+        parent.children = @[ child ];
+        XCTAssertEqual(child.parentPaint, parent);
+    }
+    XCTAssertNil(child.parentPaint);
+    XCTAssertNil(child.referencingPaint);
+}
 
 - (void)testManagerLookupEnumeratesManagers
 {

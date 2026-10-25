@@ -22,16 +22,6 @@ static const char* IJSVGNodeKeywordBytes(NSString* value)
     return source.bytes != NULL && memchr(source.bytes, 0, source.length) == NULL ? source.bytes : "";
 }
 
-BOOL IJSVGParserAttributeHasValue(NSString* __unsafe_unretained const* values, IJSVGNodeAttribute attribute, NSString* __strong* value)
-{
-    NSString* __unsafe_unretained candidate = values[attribute];
-    if (candidate == nil || candidate.length == 0) {
-        return NO;
-    }
-    *value = candidate;
-    return YES;
-}
-
 void IJSVGParseColorAttributes(IJSVGNode* node, IJSVGNodeParsingContext* context)
 {
     NSString* __unsafe_unretained* attributeValues = context->values;
@@ -105,26 +95,107 @@ void IJSVGParsePathAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext* 
     }
 }
 
+void IJSVGGeometryLengthCacheDestroy(IJSVGGeometryLengthCache* cache)
+{
+    for (NSUInteger index = 0; index < cache->count; index++) {
+        CFRelease(cache->entries[index].value);
+        if (cache->entries[index].length != NULL) {
+            CFRelease(cache->entries[index].length);
+        }
+    }
+    free(cache->entries);
+    *cache = (IJSVGGeometryLengthCache) { 0 };
+}
+
 static inline IJSVGUnitLength* IJSVGCachedGeometryLength(IJSVGNodeParsingContext* context, NSString* value, IJSVGNodeAttribute attribute)
 {
-    if (context->cachedGeometryLengths == nil) {
-        return IJSVGGeometryLengthFromString(value, attribute) ?: IJSVGGeometryInitialLength(attribute);
-    }
-    NSNumber* key = @(attribute);
-    if ([context->cachedGeometryValues[key] isEqualToString:value]) {
-        return context->cachedGeometryLengths[key];
+    IJSVGGeometryLengthCache* cache = context->cachedGeometry;
+    IJSVGGeometryLengthCacheEntry* entry = NULL;
+    if (cache != NULL) {
+        for (NSUInteger index = 0; index < cache->count; index++) {
+            if (cache->entries[index].attribute == attribute) {
+                entry = &cache->entries[index];
+                if (CFEqual(entry->value, (__bridge CFStringRef)value)) {
+                    return (__bridge IJSVGUnitLength*)entry->length;
+                }
+                break;
+            }
+        }
     }
     IJSVGUnitLength* length = IJSVGGeometryLengthFromString(value, attribute) ?: IJSVGGeometryInitialLength(attribute);
-    context->cachedGeometryValues[key] = value;
-    context->cachedGeometryLengths[key] = length;
+    if (cache == NULL) {
+        return length;
+    }
+    if (entry == NULL) {
+        IJSVGGeometryLengthCacheEntry* entries = realloc(cache->entries, (cache->count + 1) * sizeof(*entries));
+        if (entries == NULL) {
+            return length;
+        }
+        cache->entries = entries;
+        entry = &entries[cache->count++];
+        *entry = (IJSVGGeometryLengthCacheEntry) { .attribute = attribute };
+    }
+    CFStringRef retainedValue = CFBridgingRetain(value);
+    CFTypeRef retainedLength = CFBridgingRetain(length);
+    if (entry->value != NULL) {
+        CFRelease(entry->value);
+    }
+    if (entry->length != NULL) {
+        CFRelease(entry->length);
+    }
+    entry->value = retainedValue;
+    entry->length = retainedLength;
     return length;
+}
+
+static IJSVGUnitLength* IJSVGGeometryScratchLength(const IJSVGNodeParsingContext* context, NSUInteger attribute)
+{
+    for (NSUInteger index = 0; index < context->geometryLengthCount; index++) {
+        if (context->geometryAttributes[index] == attribute) {
+            return (__bridge IJSVGUnitLength*)context->geometryLengths[index];
+        }
+    }
+    return nil;
+}
+
+static void IJSVGGeometryScratchStore(IJSVGNodeParsingContext* context, NSUInteger attribute, IJSVGUnitLength* length)
+{
+    // There are exactly nine supported geometry properties, stored once each.
+    NSCAssert(context->geometryLengthCount < 9, @"Too many geometry properties");
+    NSUInteger index = context->geometryLengthCount++;
+    context->geometryAttributes[index] = attribute;
+    context->geometryLengths[index] = CFBridgingRetain(length);
+}
+
+void IJSVGPublishGeometryLengths(IJSVGNodeParsingContext* context)
+{
+    if (context->geometryLengthCount == 0) {
+        return;
+    }
+    NSNumber* keys[9];
+    id __unsafe_unretained values[9];
+    for (NSUInteger index = 0; index < context->geometryLengthCount; index++) {
+        keys[index] = @(context->geometryAttributes[index]);
+        values[index] = (__bridge id)context->geometryLengths[index];
+    }
+    context->geometryOwner.geometryLengths = [NSDictionary dictionaryWithObjects:values forKeys:keys count:context->geometryLengthCount];
+}
+
+void IJSVGReleaseGeometryLengths(IJSVGNodeParsingContext* context)
+{
+    for (NSUInteger index = 0; index < context->geometryLengthCount; index++) {
+        if (context->geometryLengths[index] != NULL) {
+            CFRelease(context->geometryLengths[index]);
+        }
+    }
+    context->geometryLengthCount = 0;
 }
 
 // The caller supplies exactly one supported geometry property. CSS only
 // properties on ancestors are retained separately for explicit inheritance.
 BOOL IJSVGReadGeometryLength(IJSVGGraphicsNode* node, IJSVGNodeParsingContext* context, IJSVGNodeAttribute attribute, IJSVGUnitLength* __strong* usedLength)
 {
-    IJSVGUnitLength* length = context->geometryLengths[@(attribute)];
+    IJSVGUnitLength* length = IJSVGGeometryScratchLength(context, attribute);
     if (length == nil) {
         NSString* value = context->values[attribute];
         if (value == nil) {
@@ -134,11 +205,8 @@ BOOL IJSVGReadGeometryLength(IJSVGGraphicsNode* node, IJSVGNodeParsingContext* c
         if (length.inherit) {
             length = node.styleParent.geometryLengths[@(attribute)] ?: IJSVGGeometryInitialLength(attribute);
         }
-        if (context->geometryLengths == nil) {
-            context->geometryLengths = [[NSMutableDictionary alloc] init];
-        }
         context->geometryOwner = node;
-        context->geometryLengths[@(attribute)] = length;
+        IJSVGGeometryScratchStore(context, attribute, length);
     }
     *usedLength = length.type == IJSVGUnitLengthTypeAuto ? nil : length;
     return YES;
@@ -151,7 +219,7 @@ static void IJSVGStoreInheritedGeometry(IJSVGGraphicsNode* node, IJSVGNodeParsin
     }
     for (NSString* name in declarations.properties) {
         NSUInteger attribute = IJSVGNodeAttributeForName(name);
-        if (!IJSVGAttributeIsGeometryProperty(attribute) || context->geometryLengths[@(attribute)] != nil) {
+        if (!IJSVGAttributeIsGeometryProperty(attribute) || IJSVGGeometryScratchLength(context, attribute) != nil) {
             continue;
         }
         NSString* value = [context->inlineStyle property:name];
@@ -165,11 +233,8 @@ static void IJSVGStoreInheritedGeometry(IJSVGGraphicsNode* node, IJSVGNodeParsin
         if (length.inherit) {
             length = node.styleParent.geometryLengths[@(attribute)] ?: IJSVGGeometryInitialLength(attribute);
         }
-        if (context->geometryLengths == nil) {
-            context->geometryLengths = [[NSMutableDictionary alloc] init];
-        }
         context->geometryOwner = node;
-        context->geometryLengths[@(attribute)] = length;
+        IJSVGGeometryScratchStore(context, attribute, length);
     }
 }
 
@@ -692,4 +757,18 @@ Class IJSVGNodeClassForType(IJSVGNodeType type)
         default:
             return Nil;
     }
+}
+
+IJSVGBitFlags* IJSVGBuiltInAllowedAttributes(IJSVGNodeType type)
+{
+    static dispatch_once_t tokens[256];
+    static IJSVGBitFlags* attributes[256];
+    if ((NSUInteger)type >= 256) {
+        return nil;
+    }
+    dispatch_once(&tokens[type], ^{
+        // This switch uses class references resolved at compile time.
+        attributes[type] = [IJSVGNodeClassForType(type) computedAllowedAttributes];
+    });
+    return attributes[type];
 }

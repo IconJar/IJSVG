@@ -9,10 +9,14 @@
 #import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGRadialGradient.h>
 
-@interface IJSVGGradientGeometry : NSObject
-@property (nonatomic, readonly) IJSVGUnitType units;
-- (instancetype)initWithLinearGradient:(IJSVGLinearGradient*)gradient;
-- (instancetype)initWithRadialGradient:(IJSVGRadialGradient*)gradient;
-- (void)applyToLinearGradient:(IJSVGLinearGradient*)gradient;
-- (void)applyToRadialGradient:(IJSVGRadialGradient*)gradient;
-@end
+typedef struct {
+    CFTypeRef coordinates[6];
+    IJSVGUnitType units;
+    IJSVGGradientSpreadMethod spreadMethod;
+} IJSVGGradientGeometry;
+
+IJSVGGradientGeometry* IJSVGGradientGeometryCreateLinear(IJSVGLinearGradient* gradient);
+IJSVGGradientGeometry* IJSVGGradientGeometryCreateRadial(IJSVGRadialGradient* gradient);
+void IJSVGGradientGeometryDestroy(IJSVGGradientGeometry* geometry);
+void IJSVGGradientGeometryApplyLinear(const IJSVGGradientGeometry* geometry, IJSVGLinearGradient* gradient);
+void IJSVGGradientGeometryApplyRadial(const IJSVGGradientGeometry* geometry, IJSVGRadialGradient* gradient);

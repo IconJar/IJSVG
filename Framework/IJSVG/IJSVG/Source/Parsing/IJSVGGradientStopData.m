@@ -9,15 +9,16 @@
 #import <IJSVG/IJSVGColorNode.h>
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVGGradientStopData.h>
+#import <IJSVGNodeParsing.h>
 #import <IJSVGXML.h>
 
-IJSVGGradientStopData IJSVGGradientStopDataCreate(IJSVGStop* stop, IJSVGXMLNode* element)
+IJSVGGradientStopData IJSVGGradientStopDataCreate(IJSVGStop* stop, IJSVGXMLNode* element, IJSVGParser* parser)
 {
     IJSVGXMLAttribute* opacity = IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeStopOpacity);
     BOOL explicitOpacity = opacity != NULL && opacity->value.length != 0;
     NSString* inlineValue = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeStyle));
     if (inlineValue.length != 0) {
-        IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:inlineValue];
+        IJSVGStyleSheetStyle* style = [parser parsedInlineStyleForValue:inlineValue];
         NSUInteger count = 0;
         const IJSVGStyleSheetAttribute* entries = [style attributesWithCount:&count];
         for (NSUInteger index = 0; index < count; index++) {

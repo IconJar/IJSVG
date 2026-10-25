@@ -422,6 +422,10 @@ static CGFloat IJSVGInheritedIntegerValue = INT_MIN;
 @class IJSVGGroup;
 
 @interface IJSVGNode : NSObject <NSCopying> {
+@package
+
+    // Zero means no library factory identity. Library factories encode type + 1.
+    uint8_t _builtInNodeType;
 @private
     BOOL _computedTraits;
 }

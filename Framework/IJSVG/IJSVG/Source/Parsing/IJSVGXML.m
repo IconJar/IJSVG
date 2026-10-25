@@ -609,13 +609,13 @@ const char* IJSVGXMLAttributeBytes(IJSVGXMLAttribute* attribute)
     return attribute == NULL ? NULL : attribute->document->bytes + attribute->value.offset;
 }
 
-NSString* IJSVGXMLAttributeValue(IJSVGXMLAttribute* attribute)
+CFStringRef IJSVGXMLAttributeGetValue(IJSVGXMLAttribute* attribute)
 {
     if (attribute == NULL) {
-        return nil;
+        return NULL;
     }
     if (attribute->cachedValue == NULL) {
         attribute->cachedValue = CFStringCreateWithBytes(NULL, (const UInt8*)IJSVGXMLAttributeBytes(attribute), attribute->value.length, kCFStringEncodingUTF8, false);
     }
-    return (__bridge NSString*)attribute->cachedValue;
+    return attribute->cachedValue;
 }

@@ -8,6 +8,7 @@
 
 #import <AppKit/AppKit.h>
 #import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGColorNode.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGParser.h>
@@ -61,10 +62,45 @@ static NSString* const IJSVGMarkerTestTriangle = @"<path d='M0 -2L6 0L0 2Z' fill
 
 @end
 
+@interface IJSVGContextOverrideColor : IJSVGColorNode
+@end
+
+@implementation IJSVGContextOverrideColor
+
++ (void)initialize
+{
+    // Subclasses may provide their own initialization without calling super.
+}
+
+- (IJSVGContextPaint)contextPaint
+{
+    return IJSVGContextPaintFill;
+}
+
+@end
+
+@interface IJSVGQuartzRenderer (ContextPaintTests)
+- (BOOL)nodeNeedsContextPaint:(IJSVGNode*)source;
+@end
+
 @interface IJSVGMarkerTests : XCTestCase
 @end
 
 @implementation IJSVGMarkerTests
+
+- (void)testContextPaintDetectionRespectsCustomGetterAndInitializer
+{
+    // Also run this test on its own: prior context paint creation must not be
+    // required for a custom getter to participate in context resolution.
+    IJSVGPath* path = [[IJSVGPath alloc] init];
+    path.fill = [[IJSVGContextOverrideColor alloc] initWithColor:NULL];
+    IJSVGGroup* group = [[IJSVGGroup alloc] init];
+    [group addChild:path];
+    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+    XCTAssertTrue([renderer nodeNeedsContextPaint:path]);
+    XCTAssertTrue([renderer nodeNeedsContextPaint:group]);
+    [group removeChild:path];
+}
 
 - (void)testResolvedPaintStylePreservesInheritanceAndCustomAccessors
 {

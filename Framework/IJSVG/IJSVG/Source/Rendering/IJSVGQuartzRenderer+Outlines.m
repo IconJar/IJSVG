@@ -375,7 +375,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
     if (paint.hidden || paint.opacity <= 0) {
         return 0;
     }
-    BOOL structural = paint.class == IJSVGGroupPaint.class || paint.class == IJSVGTransformPaint.class;
+    BOOL structural = IJSVGGetBuiltInPaintKind(paint) == IJSVGBuiltInPaintGroup || IJSVGGetBuiltInPaintKind(paint) == IJSVGBuiltInPaintTransform;
     if ((structural || (paint.paintTraits & IJSVGPaintTraitShape) != 0) && paint.children.count == 1) {
         IJSVGPaint* child = paint.children.firstObject;
         return [self outlineRectangleAreaForPaint:child transform:CGAffineTransformConcat(child.placementTransform, transform)];
@@ -434,7 +434,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
     }
 
     // Structural wrappers can share one union with their parent.
-    BOOL structural = paint.class == IJSVGGroupPaint.class || paint.class == IJSVGTransformPaint.class;
+    BOOL structural = IJSVGGetBuiltInPaintKind(paint) == IJSVGBuiltInPaintGroup || IJSVGGetBuiltInPaintKind(paint) == IJSVGBuiltInPaintTransform;
     if (structural && paint.clipPath == NULL && paint.maskPaint == nil && paint.blendingMode <= kCGBlendModeLuminosity) {
         return [self appendPlacedChildOutlinesForPaint:paint transform:transform paths:paths pendingFilters:pending];
     }

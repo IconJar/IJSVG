@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGGradientDrawing.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGXML.h>
 
@@ -26,9 +27,58 @@ static IJSVGUnitLength* IJSVGLinearGradientCoordinate(IJSVGXMLAttribute* attribu
 
 @implementation IJSVGLinearGradient
 
+// Allocation already supplies the class. A static identity
+// comparison here avoids object class queries in parsing and drawing, while
+// subclasses keep the general implementation.
++ (instancetype)allocWithZone:(NSZone*)zone
+{
+    IJSVGLinearGradient* instance = [super allocWithZone:zone];
+    if (self == IJSVGLinearGradient.class) {
+        IJSVGMarkBuiltInNode(instance, IJSVGNodeTypeLinearGradient);
+    }
+    return instance;
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeLinearGradient;
+}
+
+void IJSVGDrawLinearGradient(IJSVGLinearGradient* gradient, CGGradientRef stops,
+    CGContextRef ctx, CGRect objectRect, CGAffineTransform absoluteTransform)
+{
+    BOOL inUserSpace = gradient.units == IJSVGUnitUserSpaceOnUse;
+
+    CGPoint gradientStartPoint = CGPointZero;
+    CGPoint gradientEndPoint = CGPointZero;
+    CGRect boundingBox = objectRect;
+
+    // make sure we apply the absolute position to
+    // transform us back into the correct space
+    CGFloat width = CGRectGetWidth(boundingBox);
+    CGFloat height = CGRectGetHeight(boundingBox);
+
+    if (inUserSpace == YES) {
+        CGContextConcatCTM(ctx, absoluteTransform);
+    } else {
+        width = 1.f;
+        height = 1.f;
+        CGContextConcatCTM(ctx, CGAffineTransformMakeScale(boundingBox.size.width, boundingBox.size.height));
+    }
+
+    gradientStartPoint = CGPointMake([gradient.x1 computeValue:width], [gradient.y1 computeValue:height]);
+    gradientEndPoint = CGPointMake([gradient.x2 computeValue:width], [gradient.y2 computeValue:height]);
+
+    // concat the gradient transform into the context
+    IJSVGConcatTransformsCTM(ctx, gradient.transforms);
+
+    if ([gradient drawSpreadInContext:ctx startPoint:gradientStartPoint endPoint:gradientEndPoint startRadius:0.f endRadius:0.f radial:NO]) {
+        return;
+    }
+
+    // draw the gradient
+    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
+    CGContextDrawLinearGradient(ctx, stops != NULL ? stops : gradient.CGGradient, gradientStartPoint, gradientEndPoint, options);
 }
 
 #pragma mark - Parsing
@@ -68,38 +118,7 @@ static IJSVGUnitLength* IJSVGLinearGradientCoordinate(IJSVGXMLAttribute* attribu
 
 - (void)drawInContextRef:(CGContextRef)ctx bounds:(CGRect)objectRect transform:(CGAffineTransform)absoluteTransform
 {
-    BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
-
-    CGPoint gradientStartPoint = CGPointZero;
-    CGPoint gradientEndPoint = CGPointZero;
-    CGRect boundingBox = objectRect;
-
-    // make sure we apply the absolute position to
-    // transform us back into the correct space
-    CGFloat width = CGRectGetWidth(boundingBox);
-    CGFloat height = CGRectGetHeight(boundingBox);
-
-    if (inUserSpace == YES) {
-        CGContextConcatCTM(ctx, absoluteTransform);
-    } else {
-        width = 1.f;
-        height = 1.f;
-        CGContextConcatCTM(ctx, CGAffineTransformMakeScale(boundingBox.size.width, boundingBox.size.height));
-    }
-
-    gradientStartPoint = CGPointMake([self.x1 computeValue:width], [self.y1 computeValue:height]);
-    gradientEndPoint = CGPointMake([self.x2 computeValue:width], [self.y2 computeValue:height]);
-
-    // concat the gradient transform into the context
-    IJSVGConcatTransformsCTM(ctx, self.transforms);
-
-    if ([self drawSpreadInContext:ctx startPoint:gradientStartPoint endPoint:gradientEndPoint startRadius:0.f endRadius:0.f radial:NO]) {
-        return;
-    }
-
-    // draw the gradient
-    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
-    CGContextDrawLinearGradient(ctx, self.CGGradient, gradientStartPoint, gradientEndPoint, options);
+    IJSVGDrawLinearGradient(self, NULL, ctx, objectRect, absoluteTransform);
 }
 
 @end

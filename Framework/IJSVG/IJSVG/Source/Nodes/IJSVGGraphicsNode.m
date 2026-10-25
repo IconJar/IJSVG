@@ -563,12 +563,9 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
     return (IJSVGColorInterpolation)_paintColorInterpolation;
 }
 
-/// Stores the interpolation and invalidates cached inherited values, since
-/// descendants and referencing gradients may resolve through this node.
 - (void)setColorInterpolation:(IJSVGColorInterpolation)value
 {
     _paintColorInterpolation = (uint8_t)value;
-    IJSVGNodeInvalidateInheritance();
 }
 
 - (IJSVGColorInterpolation)resolvedColorInterpolation

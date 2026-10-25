@@ -8,6 +8,8 @@
 
 #import <IJSVG/IJSVGGradient.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGGradientDrawing.h>
+#import <IJSVGNodeParsing.h>
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVGShapePaint.h>
 
@@ -18,6 +20,8 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 @interface IJSVGShapePaint () {
     NSData* _dashLengths;
+    CGGradientRef _resolvedFillGradient;
+    BOOL _usesPreparedFillGradient;
     BOOL _hasPointSubpaths;
     BOOL _checkedPointSubpaths;
     CGPathRef _nonScalingStrokeOutline;
@@ -33,12 +37,33 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 @implementation IJSVGShapePaint
 
+// Allocation already supplies the class. A static identity
+// comparison here avoids object class queries in parsing and drawing, while
+// subclasses keep the general implementation.
++ (instancetype)allocWithZone:(NSZone*)zone
+{
+    IJSVGShapePaint* instance = [super allocWithZone:zone];
+    if (self == IJSVGShapePaint.class) {
+        instance->_builtInPaintKind = IJSVGBuiltInPaintShape;
+    }
+    return instance;
+}
+
 - (IJSVGPaintTraits)paintTraits
 {
     return IJSVGPaintTraitShape;
 }
 
 @synthesize lineDashPattern = _lineDashPattern;
+
+- (void)setFillGradient:(IJSVGGradient*)gradient
+{
+    CGGradientRelease(_resolvedFillGradient);
+    _resolvedFillGradient = NULL;
+    _fillGradient = gradient;
+    _usesPreparedFillGradient = (IJSVGBuiltInNodeType(gradient) == IJSVGNodeTypeLinearGradient)
+        && gradient.spreadMethod == IJSVGGradientSpreadMethodPad;
+}
 
 - (NSData*)lineDashData
 {
@@ -140,6 +165,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 - (void)dealloc
 {
+    CGGradientRelease(_resolvedFillGradient);
     CGPathRelease(_nonScalingStrokeOutline);
     CGPathRelease(_path);
     CGColorRelease(_fillColor);
@@ -256,7 +282,16 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
             CGContextClip(ctx);
         }
         if (!CGRectIsEmpty(CGContextGetClipBoundingBox(ctx))) {
-            [_fillGradient drawInContextRef:ctx bounds:IJSVGPaintGetBoundingBoxBounds(self) transform:CGAffineTransformIdentity];
+            if (_usesPreparedFillGradient) {
+                // As with separate gradient paints, retain stops for this render tree.
+                if (_resolvedFillGradient == NULL) {
+                    _resolvedFillGradient = CGGradientRetain(_fillGradient.CGGradient);
+                }
+                IJSVGDrawLinearGradient((IJSVGLinearGradient*)_fillGradient, _resolvedFillGradient,
+                    ctx, IJSVGPaintGetBoundingBoxBounds(self), CGAffineTransformIdentity);
+            } else {
+                [_fillGradient drawInContextRef:ctx bounds:IJSVGPaintGetBoundingBoxBounds(self) transform:CGAffineTransformIdentity];
+            }
         }
         CGContextRestoreGState(ctx);
         return;
