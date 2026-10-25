@@ -245,24 +245,33 @@ static IJSVGFilter* IJSVGCSSSpatialFilter(const IJSVGCSSComponents* components, 
 
 // Hash every character to reduce table probes for patterned SVG IDs.
 // Short identifiers avoid UTF8 conversion and its temporary string storage.
+// Called for every table probe, so short identifiers use the CoreFoundation
+// accessors directly instead of sending messages to the string.
 static CFHashCode IJSVGParserIdentifierHash(const void* value)
 {
-    NSString* string = (__bridge NSString*)value;
-    NSUInteger length = string.length;
+    CFStringRef reference = (CFStringRef)value;
+    CFIndex length = CFStringGetLength(reference);
     if (length <= 64) {
         unichar characters[64];
-        [string getCharacters:characters range:NSMakeRange(0, length)];
-        return (CFHashCode)IJSVGHashBytes(characters, length * sizeof(unichar));
+        CFStringGetCharacters(reference, CFRangeMake(0, length), characters);
+        return (CFHashCode)IJSVGHashBytes(characters, (size_t)length * sizeof(unichar));
     }
+    NSString* string = (__bridge NSString*)value;
     const char* bytes = string.UTF8String;
     return bytes != NULL ? (CFHashCode)IJSVGHashBytes(bytes, [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) : CFHash(value);
 }
 
 // Newly created nodes derive canonical names from their type. Only unknown
 // elements and noncanonical source spelling need an explicit name override.
+// Canonical names are constant strings, so their bytes are usually available
+// without a converted copy.
 static void IJSVGPreserveElementName(IJSVGNode* node, IJSVGXMLNode* element)
 {
-    const char* canonical = node.name.UTF8String;
+    NSString* name = node.name;
+    const char* canonical = name == nil ? NULL : CFStringGetCStringPtr((__bridge CFStringRef)name, kCFStringEncodingUTF8);
+    if (canonical == NULL) {
+        canonical = name.UTF8String;
+    }
     if (canonical == NULL || strcmp(canonical, element->name) != 0) {
         node.name = IJSVGXMLLocalName(element);
     }
@@ -765,6 +774,9 @@ static BOOL IJSVGPlainPrimitiveKey(IJSVGXMLNode* element, uint8_t* key, size_t* 
     NSUInteger _gradientStopStyleRuleCount;
     BOOL _gradientStopStylesKnown;
     BOOL _hasGradientStopStyles;
+    NSUInteger _linearGradientStyleRuleCount;
+    BOOL _linearGradientStylesKnown;
+    BOOL _hasLinearGradientStyles;
     IJSVGByteCache* _sharedGradientStops;
     IJSVGByteCache* _plainFilterTemplates;
     IJSVGByteCache* _plainPrimitiveTemplates;
@@ -963,6 +975,7 @@ static BOOL IJSVGPlainPrimitiveKey(IJSVGXMLNode* element, uint8_t* key, size_t* 
     self.parsedFilterReferences = nil;
     self.allowedAttributesByClass = nil;
     _gradientStopStylesKnown = NO;
+    _linearGradientStylesKnown = NO;
     self.parsedSVGTransforms = nil;
     self.parsedCSSTransforms = nil;
     [self clearRawAttributeCache];
@@ -1234,7 +1247,8 @@ static BOOL IJSVGPlainPrimitiveKey(IJSVGXMLNode* element, uint8_t* key, size_t* 
 
     // Coordinate only gradients need no style cascade. Their coordinates are
     // resolved by parseGradient after the stop children have been constructed.
-    if (node.type == IJSVGNodeTypeLinearGradient && _styleSheet.ruleCount == 0 && ignoringAttributes == nil) {
+    // Rules that cannot set any gradient attribute leave the cascade empty.
+    if (node.type == IJSVGNodeTypeLinearGradient && ignoringAttributes == nil && ![self hasLinearGradientStyles]) {
         IJSVGXMLAttributeList attributes = input != nil ? input.attributes : IJSVGXMLAttributes(element);
         NSString* identifier = nil;
         BOOL plainGradient = YES;
@@ -2282,6 +2296,20 @@ static BOOL IJSVGPlainPrimitiveKey(IJSVGXMLNode* element, uint8_t* key, size_t* 
         _gradientStopStylesKnown = YES;
     }
     return _hasGradientStopStyles;
+}
+
+/// Reports whether any stylesheet rule can set an attribute of a linear
+/// gradient. Unrelated rules, such as universal stroke styles, keep coordinate
+/// only gradients on the plain path.
+- (BOOL)hasLinearGradientStyles
+{
+    NSUInteger count = _styleSheet.ruleCount;
+    if (!_linearGradientStylesKnown || count != _linearGradientStyleRuleCount) {
+        _hasLinearGradientStyles = count != 0 && [_styleSheet mayAffectAttributes:[self allowedAttributesForNodeClass:IJSVGLinearGradient.class]];
+        _linearGradientStyleRuleCount = count;
+        _linearGradientStylesKnown = YES;
+    }
+    return _hasLinearGradientStyles;
 }
 
 - (void)populateGradient:(IJSVGGradient*)gradient fromElement:(IJSVGXMLNode*)element

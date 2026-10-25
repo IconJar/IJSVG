@@ -17,6 +17,24 @@
 #import <limits.h>
 #import <simd/simd.h>
 
+/// Reads an arithmetic coefficient from an immutable parameter snapshot.
+/// Missing values and single digit literals match the primitive parser without
+/// taking its lock. Every other value still uses the general parser.
+static CGFloat IJSVGFilterSIMDCoefficient(IJSVGFilterPrimitive* primitive, NSDictionary<NSString*, NSString*>* parameters, NSString* name)
+{
+    NSString* source = parameters[name];
+    if (source.length == 0) {
+        return 0;
+    }
+    if (source.length == 1) {
+        unichar digit = [source characterAtIndex:0];
+        if (digit >= '0' && digit <= '9') {
+            return digit - '0';
+        }
+    }
+    return [primitive numberForParameter:name defaultValue:0];
+}
+
 BOOL IJSVGFilterSIMDUsesBackdropAddition(IJSVGFilter* filter)
 {
     NSArray<IJSVGFilterPrimitive*>* primitives = filter.primitives;
@@ -24,7 +42,11 @@ BOOL IJSVGFilterSIMDUsesBackdropAddition(IJSVGFilter* filter)
         return NO;
     }
     IJSVGFilterPrimitive* primitive = primitives.firstObject;
-    return primitive.type == IJSVGNodeTypeFilterComposite && [primitive.input isEqualToString:IJSVGStringSourceGraphic] && [primitive.input2 isEqualToString:IJSVGStringBackgroundImage] && primitive.compositeOperator == IJSVGFilterCompositeOperatorArithmetic && [primitive numberForParameter:IJSVGAttributeK1 defaultValue:0] == 0 && [primitive numberForParameter:IJSVGAttributeK2 defaultValue:0] == 1 && [primitive numberForParameter:IJSVGAttributeK3 defaultValue:0] == 1 && [primitive numberForParameter:IJSVGAttributeK4 defaultValue:0] == 0;
+    if (primitive.type != IJSVGNodeTypeFilterComposite || ![primitive.input isEqualToString:IJSVGStringSourceGraphic] || ![primitive.input2 isEqualToString:IJSVGStringBackgroundImage] || primitive.compositeOperator != IJSVGFilterCompositeOperatorArithmetic) {
+        return NO;
+    }
+    NSDictionary<NSString*, NSString*>* parameters = primitive.parameters;
+    return IJSVGFilterSIMDCoefficient(primitive, parameters, IJSVGAttributeK1) == 0 && IJSVGFilterSIMDCoefficient(primitive, parameters, IJSVGAttributeK2) == 1 && IJSVGFilterSIMDCoefficient(primitive, parameters, IJSVGAttributeK3) == 1 && IJSVGFilterSIMDCoefficient(primitive, parameters, IJSVGAttributeK4) == 0;
 }
 
 typedef NS_ENUM(NSUInteger, IJSVGSIMDCompositeOperation) {

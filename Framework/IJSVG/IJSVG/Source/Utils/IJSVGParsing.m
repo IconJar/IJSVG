@@ -11,9 +11,24 @@
 #import <IJSVGCSSParser.h>
 #import <IJSVGStyleSheetUtils.h>
 
+/// Returns the UTF8 bytes of a string with their length. ASCII text has one
+/// byte per character, which avoids measuring the encoded length separately.
 IJSVGStringBytes IJSVGStringGetBytes(NSString* string)
 {
-    return (IJSVGStringBytes) { .bytes = string.UTF8String, .length = [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding] };
+    const char* bytes = string.UTF8String;
+    if (bytes != NULL) {
+        // A non ASCII character always encodes to a lead byte of 0x80 or more
+        // within the first length bytes, so this scan stays inside the buffer.
+        NSUInteger length = (NSUInteger)CFStringGetLength((__bridge CFStringRef)string);
+        NSUInteger index = 0;
+        while (index < length && (unsigned char)bytes[index] < 0x80) {
+            index++;
+        }
+        if (index == length) {
+            return (IJSVGStringBytes) { .bytes = bytes, .length = length };
+        }
+    }
+    return (IJSVGStringBytes) { .bytes = bytes, .length = [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding] };
 }
 
 IJSVGParsingStringMethod* IJSVGParsingStringMethodCreate(void)

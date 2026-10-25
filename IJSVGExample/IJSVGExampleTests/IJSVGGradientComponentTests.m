@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGGradient.h>
+#import <IJSVG/IJSVGGroup.h>
 #import <IJSVGTestHelpers.h>
 
 @interface IJSVGGradientComponentTests : XCTestCase
@@ -76,6 +77,48 @@
             }
         }
     }
+}
+
+/// Inherited interpolation is cached between draws. Edits to an ancestor,
+/// a new style parent and a freed style parent must all be observed.
+- (void)testInheritedInterpolationFollowsLiveEdits
+{
+    IJSVGGradient* gradient = [[IJSVGGradient alloc] init];
+    gradient.colors = @[ (__bridge id)NSColor.redColor.CGColor, (__bridge id)NSColor.blueColor.CGColor ];
+    gradient.numberOfStops = 2;
+    IJSVGGroup* outer = [[IJSVGGroup alloc] init];
+    IJSVGGroup* inner = [[IJSVGGroup alloc] init];
+    inner.styleParent = outer;
+    gradient.styleParent = inner;
+    NSData* srgb = [self pixelsForGradient:gradient.CGGradient];
+
+    // Repeated draws reuse the cached result.
+    XCTAssertEqualObjects([self pixelsForGradient:gradient.CGGradient], srgb);
+
+    // An edit two levels up changes the resolved interpolation.
+    outer.colorInterpolation = IJSVGColorInterpolationLinearRGB;
+    NSData* linear = [self pixelsForGradient:gradient.CGGradient];
+    XCTAssertNotEqualObjects(linear, srgb);
+    outer.colorInterpolation = IJSVGColorInterpolationUnspecified;
+    XCTAssertEqualObjects([self pixelsForGradient:gradient.CGGradient], srgb);
+
+    // Replacing the style parent is observed.
+    IJSVGGroup* linearParent = [[IJSVGGroup alloc] init];
+    linearParent.colorInterpolation = IJSVGColorInterpolationLinearRGB;
+    gradient.styleParent = linearParent;
+    XCTAssertEqualObjects([self pixelsForGradient:gradient.CGGradient], linear);
+    gradient.styleParent = inner;
+    XCTAssertEqualObjects([self pixelsForGradient:gradient.CGGradient], srgb);
+
+    // A freed style parent clears the weak link, which falls back to sRGB.
+    @autoreleasepool {
+        IJSVGGroup* transient = [[IJSVGGroup alloc] init];
+        transient.colorInterpolation = IJSVGColorInterpolationLinearRGB;
+        gradient.styleParent = transient;
+        XCTAssertEqualObjects([self pixelsForGradient:gradient.CGGradient], linear);
+    }
+    XCTAssertNil(gradient.styleParent);
+    XCTAssertEqualObjects([self pixelsForGradient:gradient.CGGradient], srgb);
 }
 
 @end

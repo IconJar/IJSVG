@@ -317,6 +317,7 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
     IJSVGStyleSheetLayer* _currentLayer;
     BOOL _layerOrderDirty;
     BOOL _hasCascadeDependentRules;
+    BOOL _firstRuleMatchesAnyNode;
 }
 
 - (IJSVGStyleSheetLayer*)registerLayerWithName:(NSArray<NSString*>*)components
@@ -701,9 +702,14 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
         _layerOrderDirty = YES;
     }
 
+    BOOL matchesAnyNode = NO;
     for (IJSVGStyleSheetSelector* selector in selectors) {
         [aRule addMatchingSelector:selector];
         _requiresSelectorTree |= selector.requiresSelectorTree;
+        matchesAnyNode |= selector.matchesAnyNode;
+    }
+    if (_rules.count == 0) {
+        _firstRuleMatchesAnyNode = matchesAnyNode;
     }
     [_rules addObject:aRule];
     if (aRule.matchesUniversalSelector) {
@@ -719,6 +725,12 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
 {
     if (_rules.count == 1 && !_hasCascadeDependentRules) {
         IJSVGStyleSheetRule* rule = _rules.firstObject;
+
+        // A lone universal rule, as written by Matplotlib, applies to every
+        // element. Skip the selector dispatch for each node of the document.
+        if (_firstRuleMatchesAnyNode && node != nil) {
+            return rule.style;
+        }
         IJSVGStyleSheetSelector* selector = nil;
         return [rule matchesNode:node selector:&selector] ? rule.style : nil;
     }

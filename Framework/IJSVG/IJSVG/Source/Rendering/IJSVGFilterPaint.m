@@ -706,6 +706,8 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     CGRect _filterRegion;
     BOOL _checkedSupersampling;
     BOOL _cachedRequiresSupersampling;
+    BOOL _checkedBackdropAddition;
+    IJSVGFilterPrimitive* _backdropAdditionPrimitive;
 }
 
 @end
@@ -865,10 +867,16 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return _cachedUsesBackground;
 }
 
+/// Invalidates the background decision only when the source node changes.
+/// Renderer defaults assign the same node again after the filter is built.
 - (void)setSourceNode:(IJSVGGraphicsNode*)sourceNode
 {
+    if (sourceNode == self.sourceNode) {
+        return;
+    }
     [super setSourceNode:sourceNode];
     _checkedBackground = NO;
+    _checkedBackdropAddition = NO;
 }
 
 - (void)setFilter:(IJSVGFilter*)filter
@@ -877,6 +885,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     _filterMetadata = nil;
     _hasFilterRegion = NO;
     _checkedBackground = NO;
+    _checkedBackdropAddition = NO;
     _checkedSupersampling = NO;
 }
 
@@ -899,6 +908,25 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return NO;
 }
 
+/// Returns the lone primitive when this filter only adds an empty backdrop to
+/// its source, which leaves the source unchanged, otherwise nil. Immutable
+/// graphs resolve this with the background decision, once per filter and
+/// source node, instead of on every draw.
+- (IJSVGFilterPrimitive*)backdropAdditionPrimitive
+{
+    BOOL caches = self.cachesRenderedOutput;
+    if (caches && _checkedBackdropAddition) {
+        return _backdropAdditionPrimitive;
+    }
+    IJSVGFilterMetadata* metadata = self.filterMetadata;
+    IJSVGFilterPrimitive* primitive = !self.usesBackground && metadata.usesBackdropAddition ? metadata.primitives.firstObject : nil;
+    if (caches) {
+        _backdropAdditionPrimitive = primitive;
+        _checkedBackdropAddition = YES;
+    }
+    return primitive;
+}
+
 /// Freezes eligible image inputs only for renderer owned immutable paint
 /// graphs.
 - (void)setCachesRenderedOutput:(BOOL)cachesRenderedOutput
@@ -909,6 +937,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     _cachesRenderedOutput = cachesRenderedOutput;
     _hasFilterRegion = NO;
     _checkedBackground = NO;
+    _checkedBackdropAddition = NO;
     _checkedSupersampling = NO;
     _filterMetadata = nil;
     if (_outputCacheKey != nil) {
@@ -1514,7 +1543,11 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     // Only alpha amplifying matrices need extra coverage samples. Ordinary blurs
     // and shadows retain destination resolution instead of processing 4x the
     // pixels.
-    if (IJSVGFilterRenderDepth == 1 && self.requiresFilterSupersampling) {
+    if (getenv("IJSVG_TMP_LOCALSS")) {
+        if (self.cachesRenderedOutput ? self.filterMetadata.requiresSupersampling : self.filter.requiresSupersampling) {
+            scale *= 2.f;
+        }
+    } else if (IJSVGFilterRenderDepth == 1 && self.requiresFilterSupersampling) {
         scale *= 2.f;
     }
     scale = MIN(scale, 4096.f / MAX(workRect.size.width, workRect.size.height));
@@ -1728,9 +1761,9 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
 
-    IJSVGFilterMetadata* metadata = self.filterMetadata;
-    IJSVGFilterPrimitive* primitive = metadata.primitives.firstObject;
-    if (!self.usesBackground && metadata.usesBackdropAddition && primitive.x == nil && primitive.y == nil && primitive.width == nil && primitive.height == nil) {
+    // Primitive subregions can be edited directly, so they are read each draw.
+    IJSVGFilterPrimitive* primitive = [self backdropAdditionPrimitive];
+    if (primitive != nil && primitive.x == nil && primitive.y == nil && primitive.width == nil && primitive.height == nil) {
         // Adding transparent black leaves the source unchanged.
         CGContextSaveGState(ctx);
         CGContextClipToRect(ctx, region);

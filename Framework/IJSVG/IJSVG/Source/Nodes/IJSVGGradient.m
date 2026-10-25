@@ -14,6 +14,8 @@
 #import <IJSVGGradientStops.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGXML.h>
+#import <objc/runtime.h>
+#import <stdatomic.h>
 #include <string.h>
 
 typedef struct {
@@ -117,6 +119,8 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
     IJSVGGradientStops* _deferredStopData;
     IJSVGGradientStops* _sharedGradientStops;
     BOOL _gradientIsLinear;
+    _Atomic uint64_t _interpolationGeneration;
+    BOOL _resolvedLinearInterpolation;
 }
 
 - (IJSVGNodeTypeTraits)nodeTraits
@@ -434,9 +438,52 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
 
 #pragma mark - Drawing
 
+/// Resolves whether stops interpolate in linear RGB. Redraws ask this for every
+/// gradient, so the inherited answer is kept until the node inheritance
+/// generation changes. Chains with custom getters are resolved every time.
+- (BOOL)resolvesLinearInterpolation
+{
+    uint64_t generation = IJSVGNodeInheritanceGeneration();
+    if (atomic_load_explicit(&_interpolationGeneration, memory_order_acquire) == generation) {
+        return _resolvedLinearInterpolation;
+    }
+    static IMP resolvedGetter = NULL;
+    static IMP storedGetter = NULL;
+    static IMP parentGetter = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        resolvedGetter = class_getMethodImplementation(IJSVGGraphicsNode.class, @selector(resolvedColorInterpolation));
+        storedGetter = class_getMethodImplementation(IJSVGGraphicsNode.class, @selector(colorInterpolation));
+        parentGetter = class_getMethodImplementation(IJSVGNode.class, @selector(styleParent));
+    });
+    if (class_getMethodImplementation(object_getClass(self), @selector(resolvedColorInterpolation)) != resolvedGetter) {
+        return self.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB;
+    }
+
+    // Mirror resolvedColorInterpolation while confirming that every visited
+    // node reads stored values, which the generation observes.
+    BOOL cacheable = YES;
+    IJSVGColorInterpolation resolved = IJSVGColorInterpolationSRGB;
+    for (IJSVGGraphicsNode* node = self; node != nil; node = node.styleParent) {
+        Class type = object_getClass(node);
+        cacheable = cacheable && class_getMethodImplementation(type, @selector(colorInterpolation)) == storedGetter && class_getMethodImplementation(type, @selector(styleParent)) == parentGetter;
+        IJSVGColorInterpolation value = node.colorInterpolation;
+        if (value != IJSVGColorInterpolationUnspecified && value != IJSVGColorInterpolationInherit) {
+            resolved = value;
+            break;
+        }
+    }
+    BOOL linear = resolved == IJSVGColorInterpolationLinearRGB;
+    if (cacheable) {
+        _resolvedLinearInterpolation = linear;
+        atomic_store_explicit(&_interpolationGeneration, generation, memory_order_release);
+    }
+    return linear;
+}
+
 - (CGGradientRef)CGGradient
 {
-    BOOL linear = self.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB;
+    BOOL linear = [self resolvesLinearInterpolation];
 
     // Parent interpolation can change without changing the stop data.
     if (_CGGradient != NULL && _gradientIsLinear != linear) {

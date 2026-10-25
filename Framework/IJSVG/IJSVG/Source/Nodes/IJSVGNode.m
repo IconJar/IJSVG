@@ -15,6 +15,7 @@
 #import <IJSVGNodeParsing.h>
 #import <IJSVGQuartzRenderer.h>
 #import <objc/runtime.h>
+#import <stdatomic.h>
 
 IJSVGNodeType IJSVGNodeTypeForString(NSString* string, IJSVGXMLNodeKind kind)
 {
@@ -448,6 +449,19 @@ static BOOL IJSVGNodeClassMatches(Class candidate, Class requested, NSMapTable<C
     return matches;
 }
 
+// Starts above zero so a zero cache stamp never matches a generation.
+static _Atomic uint64_t IJSVGNodeInheritanceCounter = 1;
+
+uint64_t IJSVGNodeInheritanceGeneration(void)
+{
+    return atomic_load_explicit(&IJSVGNodeInheritanceCounter, memory_order_acquire);
+}
+
+void IJSVGNodeInvalidateInheritance(void)
+{
+    atomic_fetch_add_explicit(&IJSVGNodeInheritanceCounter, 1, memory_order_release);
+}
+
 @implementation IJSVGNode
 
 - (IJSVGNodeTypeTraits)nodeTraits
@@ -463,9 +477,26 @@ static BOOL IJSVGNodeClassMatches(Class candidate, Class requested, NSMapTable<C
     _currentColor = retained;
 }
 
+/// Releases owned colors. Freeing a node clears weak style parent links that
+/// point at it, which changes inherited values, so cached values are invalid.
 - (void)dealloc
 {
+    IJSVGNodeInvalidateInheritance();
     CGColorRelease(_currentColor);
+}
+
+/// Changes the explicit style parent and invalidates cached inherited values.
+- (void)setStyleParent:(IJSVGGraphicsNode*)styleParent
+{
+    _styleParent = styleParent;
+    IJSVGNodeInvalidateInheritance();
+}
+
+/// Changes the structural parent and invalidates cached inherited values.
+- (void)setParentNode:(IJSVGGraphicsNode*)parentNode
+{
+    _parentNode = parentNode;
+    IJSVGNodeInvalidateInheritance();
 }
 
 @synthesize name = _name;

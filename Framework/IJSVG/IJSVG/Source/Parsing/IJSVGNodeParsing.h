@@ -190,3 +190,9 @@ void IJSVGParseMarkersAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContex
 @interface IJSVGFilterPrimitive (ParameterTemplate)
 - (instancetype)initWithParameterStateFromPrimitive:(IJSVGFilterPrimitive*)source;
 @end
+
+// Advances whenever a style parent link, a parent link or an inherited color
+// interpolation value may have changed, including when a node is freed.
+// Readers may cache inherited values while the generation is unchanged.
+uint64_t IJSVGNodeInheritanceGeneration(void);
+void IJSVGNodeInvalidateInheritance(void);

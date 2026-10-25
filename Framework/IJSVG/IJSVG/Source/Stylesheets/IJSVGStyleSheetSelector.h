@@ -76,6 +76,9 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorNodeKind) {
 @property (nonatomic, readonly) BOOL requiresSelectorTree;
 @property (nonatomic, readonly) IJSVGStyleSheetSelectorRaw* matchingSelector;
 
+// A lone unconstrained universal selector matches every node.
+@property (nonatomic, readonly) BOOL matchesAnyNode;
+
 + (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string forgiving:(BOOL)forgiving;
 + (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string namespaces:(NSDictionary<NSString*, NSString*>*)namespaces;
 + (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string namespaces:(NSDictionary<NSString*, NSString*>*)namespaces parentSelectors:(NSArray<IJSVGStyleSheetSelector*>*)parents;

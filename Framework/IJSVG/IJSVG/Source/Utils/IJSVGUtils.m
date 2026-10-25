@@ -643,35 +643,66 @@ IJSVGWindingRule IJSVGWindingRuleFromString(NSString* string)
     return IJSVGWindingRuleNonZero;
 }
 
+/// Copies a short keyword candidate into a buffer of UTF16 code units.
+/// Returns zero when the string is missing or longer than the buffer.
+static NSUInteger IJSVGCopyShortKeyword(NSString* string, unichar buffer[8])
+{
+    NSUInteger length = string.length;
+    if (length == 0 || length > 8) {
+        return 0;
+    }
+    [string getCharacters:buffer range:NSMakeRange(0, length)];
+    return length;
+}
+
+/// Compares copied code units with an ASCII keyword, matching the exact
+/// comparison of isEqualToString.
+static BOOL IJSVGShortKeywordEquals(const unichar* buffer, NSUInteger length, const char* keyword)
+{
+    for (NSUInteger index = 0; index < length; index++) {
+        if (keyword[index] == '\0' || buffer[index] != (unichar)keyword[index]) {
+            return NO;
+        }
+    }
+    return keyword[length] == '\0';
+}
+
+/// Resolves stroke line join keywords. Universal stylesheet rules apply this to
+/// every element, so it avoids object comparisons for each candidate keyword.
 IJSVGLineJoinStyle IJSVGLineJoinStyleFromString(NSString* string)
 {
-    if ([string isEqualToString:IJSVGStringMiter]) {
+    unichar buffer[8];
+    NSUInteger length = IJSVGCopyShortKeyword(string, buffer);
+    if (IJSVGShortKeywordEquals(buffer, length, "miter")) {
         return IJSVGLineJoinStyleMiter;
     }
-    if ([string isEqualToString:IJSVGStringRound]) {
+    if (IJSVGShortKeywordEquals(buffer, length, "round")) {
         return IJSVGLineJoinStyleRound;
     }
-    if ([string isEqualToString:IJSVGStringBevel]) {
+    if (IJSVGShortKeywordEquals(buffer, length, "bevel")) {
         return IJSVGLineJoinStyleBevel;
     }
-    if ([string isEqualToString:IJSVGStringInherit]) {
+    if (IJSVGShortKeywordEquals(buffer, length, "inherit")) {
         return IJSVGLineJoinStyleInherit;
     }
     return IJSVGLineJoinStyleMiter;
 }
 
+/// Resolves stroke line cap keywords without object comparisons.
 IJSVGLineCapStyle IJSVGLineCapStyleFromString(NSString* string)
 {
-    if ([string isEqualToString:IJSVGStringButt]) {
+    unichar buffer[8];
+    NSUInteger length = IJSVGCopyShortKeyword(string, buffer);
+    if (IJSVGShortKeywordEquals(buffer, length, "butt")) {
         return IJSVGLineCapStyleButt;
     }
-    if ([string isEqualToString:IJSVGStringSquare]) {
+    if (IJSVGShortKeywordEquals(buffer, length, "square")) {
         return IJSVGLineCapStyleSquare;
     }
-    if ([string isEqualToString:IJSVGStringRound]) {
+    if (IJSVGShortKeywordEquals(buffer, length, "round")) {
         return IJSVGLineCapStyleRound;
     }
-    if ([string isEqualToString:IJSVGStringInherit]) {
+    if (IJSVGShortKeywordEquals(buffer, length, "inherit")) {
         return IJSVGLineCapStyleInherit;
     }
     return IJSVGLineCapStyleButt;
