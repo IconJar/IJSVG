@@ -124,8 +124,12 @@ static void IJSVGFilterReleaseMetalBuffer(void* info, const void* bytes, size_t 
     CFRelease(info);
 }
 
+/// Avoids allocating a destination for filter output with no visible pixels.
 static CGImageRef IJSVGFilterNewSharedMetalImage(CIImage* output, CGRect extent, CGColorSpaceRef colorSpace)
 {
+    if (output == nil || !CGRectIntersectsRect(output.extent, extent)) {
+        return NULL;
+    }
     static id<MTLDevice> device;
     static id<MTLCommandQueue> queue;
     static CIContext* context;
@@ -331,8 +335,13 @@ static BOOL IJSVGFilterRenderBlurEntries(NSArray<IJSVGQuartzFilterBatchEntry*>* 
     return YES;
 }
 
+/// Materializes an atlas only when its output overlaps the destination.
 static CGImageRef IJSVGFilterNewImageForAtlas(CIImage* atlas, CGSize size)
 {
+    CGRect extent = CGRectMake(0, 0, size.width, size.height);
+    if (atlas == nil || !CGRectIntersectsRect(atlas.extent, extent)) {
+        return NULL;
+    }
     __block CGImageRef rendered = NULL;
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
 
@@ -340,7 +349,7 @@ static CGImageRef IJSVGFilterNewImageForAtlas(CIImage* atlas, CGSize size)
     // remain concurrent, and the slot is returned before cropping or replay.
     [IJSVGThreadManager performCIOutputBlock:^{
         [IJSVGThreadManager performBlockWithCIContext:^(CIContext* ciContext, BOOL supportsMetalKernels) {
-            rendered = [ciContext createCGImage:atlas fromRect:CGRectMake(0, 0, size.width, size.height) format:kCIFormatRGBA8 colorSpace:colorSpace];
+            rendered = [ciContext createCGImage:atlas fromRect:extent format:kCIFormatRGBA8 colorSpace:colorSpace];
         }];
     }];
     CGColorSpaceRelease(colorSpace);
@@ -1436,6 +1445,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return CGRectIntersection(extent, CGRectIntegral(required));
 }
 
+/// Renders filter output while leaving empty destination regions transparent.
 - (void)renderSource:(CIImage*)source graph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx colorSpace:(CGColorSpaceRef)colorSpace region:(CGRect)region workRect:(CGRect)workRect
 {
     IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
@@ -1485,6 +1495,11 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
             CGRect anchor = CGRectIntegral(output.extent);
             CGPoint origin = CGPointMake(CGRectGetMinX(anchor), CGRectGetMaxY(anchor));
             outputExtent = CGRectIntersection(extent, IJSVGFilterAlignedRect(requestedExtent, origin));
+        }
+
+        // Empty or displaced filter output contributes transparent pixels.
+        if (output == nil || !CGRectIntersectsRect(output.extent, outputExtent)) {
+            return;
         }
         CGImageRef image = NULL;
 

@@ -113,6 +113,7 @@ static NSString* IJSVGImageURLWithoutWhitespace(NSString* string)
     }
 }
 
+/// Loads declared SVG images directly and decodes recognized bitmap formats.
 - (void)loadFromURL:(NSURL*)aURL
 {
     BOOL dataURL = [aURL.scheme.lowercaseString isEqualToString:@"data"];
@@ -136,9 +137,10 @@ static NSString* IJSVGImageURLWithoutWhitespace(NSString* string)
     }
 
     NSString* mimeType = [IJSVGUtils MIMETypeForImageData:data sourceURL:aURL];
-    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+    BOOL declaredSVG = [mimeType.lowercaseString isEqualToString:@"image/svg+xml"];
+    CGImageSourceRef source = declaredSVG ? NULL : CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
     CGImageRef pixels = NULL;
-    if (source != NULL) {
+    if (source != NULL && CGImageSourceGetType(source) != NULL) {
         NSDictionary* properties = CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source, 0, NULL));
         NSInteger orientation = [properties[(__bridge NSString*)kCGImagePropertyOrientation] integerValue];
         if (orientation > 1) {
@@ -154,6 +156,8 @@ static NSString* IJSVGImageURLWithoutWhitespace(NSString* string)
         } else {
             pixels = CGImageSourceCreateImageAtIndex(source, 0, NULL);
         }
+    }
+    if (source != NULL) {
         CFRelease(source);
     }
     if (pixels != NULL) {
