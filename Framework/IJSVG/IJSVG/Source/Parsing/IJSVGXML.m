@@ -344,6 +344,7 @@ void IJSVGXMLDocumentDestroy(IJSVGXMLDocument* document)
     free(document);
 }
 
+/// Parses compact SVG storage and releases temporary libxml document ownership.
 static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t length)
 {
     if (length > INT_MAX) {
@@ -394,6 +395,11 @@ static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t le
         status = xmlParseChunk(parser, NULL, 0, 1);
     }
     bool valid = status == 0 && parser->wellFormed && parser->nsWellFormed && !document->failed && document->root != IJSVGXMLNodeNotFound;
+
+    // SAX parsing can allocate a compatibility document for entity declarations.
+    // Freeing the parser context does not release this document.
+    xmlFreeDoc(parser->myDoc);
+    parser->myDoc = NULL;
     xmlFreeParserCtxt(parser);
     if (!valid) {
         IJSVGXMLDocumentDestroy(document);
