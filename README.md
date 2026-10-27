@@ -1,9 +1,9 @@
-IJSVG 7.0
+IJSVG 6.1
 ===
 
 IJSVG is an Objective C library for drawing SVGs on macOS 14.6, iOS 16, tvOS 16, and visionOS 1 or later, without AppKit or UIKit dependencies. It uses Core Graphics for drawing and Core Image for SVG filters, with Metal and SIMD used to speed up supported effects.
 
-### What is new in IJSVG 7.0?
+### What is new in IJSVG 6.1?
 
 - Region queries expose link targets and node bounds before drawing, with local,
   SVG user and destination coordinate spaces for measurements and overlays.
@@ -18,7 +18,7 @@ IJSVG is an Objective C library for drawing SVGs on macOS 14.6, iOS 16, tvOS 16,
 See the region and rendering quality examples below, and the supported CSS
 features and limitations under **What it supports**.
 
-### Migration from IJSVG 6
+### Migration from IJSVG 6.0
 
 This release changes the node model for apps that inspect or construct SVG text:
 
@@ -129,8 +129,8 @@ both the Swift package and the Xcode framework.
 In Xcode, choose **File > Add Package Dependencies**, enter this repository's URL,
 and add the **IJSVG** library product to your app target. For local development,
 choose **Add Local** and select the repository root containing `Package.swift`.
-Select version **7.0.0** or later for the features documented here. Review the breaking changes
-above when upgrading from an earlier major version.
+Select version **6.1.0** or later for the features documented here. Review the breaking changes
+and migration notes above when upgrading from an earlier version.
 
 Import the library with `import IJSVG` in Swift or `@import IJSVG;` in Objective-C.
 The package uses the existing Objective-C implementation and bundles its Metal
