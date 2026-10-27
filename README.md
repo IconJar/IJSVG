@@ -1,15 +1,55 @@
-IJSVG 6.0
+IJSVG 7.0
 ===
 
 IJSVG is an Objective C library for drawing SVGs on macOS 14.6, iOS 16, tvOS 16, and visionOS 1 or later, without AppKit or UIKit dependencies. It uses Core Graphics for drawing and Core Image for SVG filters, with Metal and SIMD used to speed up supported effects.
 
-### What is new in IJSVG 6?
+### What is new in IJSVG 7.0?
+
+- Region queries expose link targets and node bounds before drawing, with local,
+  SVG user and destination coordinate spaces for measurements and overlays.
+- CSS filters support color adjustments, blur and drop shadows, including ordered
+  chains mixed with local SVG filter references and export as SVG primitives.
+- Rendering quality modes now control image interpolation, filter coverage
+  sampling and filter output interpolation, with faster options for thumbnails.
+- Parsing, initial drawing and repeated filter rendering use fewer allocations
+  and more cached work. Fixes cover nested pattern filter scaling, filter extents,
+  SVG loading and a memory leak.
+
+See the region and rendering quality examples below, and the supported CSS
+features and limitations under **What it supports**.
+
+### Migration from IJSVG 6
+
+This release changes the node model for apps that inspect or construct SVG text:
+
+- `IJSVGText.textContent` now contains `IJSVGTextContent` entries instead of mixed
+  strings and text nodes. Inspect each entry's `kind`, then read `string` or `span`.
+  Construct entries with `initWithString:` or `initWithSpan:`; do not insert raw
+  strings or nodes into the array.
+- `IJSVGAnchor` now inherits from `IJSVGGroup`. Anchors within text use
+  `IJSVGTextAnchor`, which inherits from `IJSVGText`. Both expose a `reference`;
+  code inspecting anchors must account for both classes.
+- `IJSVGNode.nodeTraits` exposes structural type flags inherited by subclasses.
+  These are separate from the existing mutable `traits` flags for style behavior.
+
+For example, replace a raw string in `textContent` with a typed entry:
+
+```objc
+textNode.textContent = @[
+    [[IJSVGTextContent alloc] initWithString:@"Hello"]
+];
+```
+
+The Core Graphics loading and drawing APIs and platform minimums remain the same
+as IJSVG 6. Apps using only those APIs do not need the text-node migration above.
+
+### What changed in IJSVG 6.0?
 
 IJSVG 6 adds iOS, iPadOS, tvOS, and visionOS support using a shared Core Graphics
 API. Native UI wrappers have been removed so the framework has no AppKit or
 UIKit dependency. This release includes breaking API changes.
 
-### Breaking changes
+### Breaking changes in IJSVG 6.0
 
 Native UI integration has been removed: `IJSVGView`, `IJSVGImageRep`, the
 `NSImage` category, `NSPasteboardWriting`, and loading from asset catalogs. Load
@@ -89,7 +129,7 @@ both the Swift package and the Xcode framework.
 In Xcode, choose **File > Add Package Dependencies**, enter this repository's URL,
 and add the **IJSVG** library product to your app target. For local development,
 choose **Add Local** and select the repository root containing `Package.swift`.
-Select version **6.0.0** or later for the current API. Review the breaking changes
+Select version **7.0.0** or later for the features documented here. Review the breaking changes
 above when upgrading from an earlier major version.
 
 Import the library with `import IJSVG` in Swift or `@import IJSVG;` in Objective-C.
@@ -204,6 +244,69 @@ Bounds include resolved fills, strokes, caps, joins, dashes, and transforms.
 They are conservative geometry bounds, not a pixel tight measurement of masks or
 clipping. Filter effects are excluded.
 
+### Link regions and node bounds
+
+Query anchor regions before drawing to place link overlays in the same rectangle:
+
+```swift
+let drawingRect = CGRect(x: 0, y: 0, width: 240, height: 160)
+let links = svg.regions(in: drawingRect)
+for region in links {
+    // Place an overlay at region.rect; resolve region.value in your app.
+    print(region.rect, region.value ?? "")
+}
+```
+
+Each rendered anchor instance returns an `IJSVGRegion` in painting order. Its
+`value` preserves the original `href`, including relative URLs and fragments.
+Rectangles use SVG coordinates with Y increasing downward. Bounds include
+transforms and viewport clipping, but are conservative for curved clips and
+masks and exclude filters and occlusion by other artwork. The app owns hit
+testing, URL resolution and navigation.
+
+For general node measurements, use
+`regions(in:coordinateSpace:nodeTypes:)`,
+`regions(for:in:coordinateSpace:)` or
+`regions(forIdentifier:in:coordinateSpace:)` in Swift. For example, in Objective C:
+
+```objc
+NSArray<IJSVGRegion*>* regions = [svg regionsForIdentifier:@"badge"
+                                                 inRect:drawingRect
+                                        coordinateSpace:IJSVGRegionCoordinateSpaceDestination];
+```
+
+Choose local coordinates for geometry before the node transform (including child
+transforms), user coordinates for geometry in the outer SVG, or destination
+coordinates for geometry mapped into the drawing rectangle. Only destination
+bounds are clipped to that rectangle. The drawing size resolves relative units
+in every coordinate space. General node bounds include strokes and exclude
+filters and masks; local bounds ignore ancestor clipping. A `nil` node type list
+includes all rendered nodes, while an empty list includes none.
+
+Regions expose the node type, source node, identifier, coordinate space and
+`instanceIndex`, which distinguishes rendered instances sharing a node or ID.
+
+### Rendering quality
+
+Full resolution is the default. Set rendering options before drawing or exporting
+a raster image to choose a faster mode:
+
+```objc
+IJSVGRenderingOptions* options = [[IJSVGRenderingOptions alloc] init];
+options.renderQuality = kIJSVGRenderQualityOptimized;
+svg.renderingOptions = options;
+```
+
+| Quality | Image interpolation | Filter coverage |
+| --- | --- | --- |
+| `kIJSVGRenderQualityFullResolution` | High | Full sampling for nested filters |
+| `kIJSVGRenderQualityOptimized` | Medium | Local sampling for thumbnails |
+| `kIJSVGRenderQualityLow` | Low | No additional coverage samples |
+
+The setting also controls filter output interpolation. Faster modes can change
+edge pixels, so use full resolution where fidelity is more important than speed.
+Document `image-rendering` hints can also affect image sampling.
+
 #### Step 1 - initialize the SVG object
     IJSVG* svg = [[IJSVG alloc] initWithFilePathURL:someURLHere];
     // or with and without extension to find it within the bundle
@@ -264,7 +367,7 @@ the style or position of part of the text.
 
 # What it supports
 
-* Elements: svg, defs, use, symbol, g, switch, path, clipPath, mask, image, circle, ellipse, rect, polyline, polygon, line, marker, text, tspan and textPath (including group hierarchy, inheritance and nested SVGs). Conditional processing includes `systemLanguage` and `requiredExtensions`.
+* Elements: svg, defs, a, use, symbol, g, switch, path, clipPath, mask, image, circle, ellipse, rect, polyline, polygon, line, marker, text, tspan and textPath (including group hierarchy, inheritance and nested SVGs). Conditional processing includes `systemLanguage` and `requiredExtensions`.
 * Commands: A, M, L, H, V, C, S, T, Q and Z and full support for multiple parameters of each type.
 * Transformations: matrix, rotate, translate, scale and skew transformations, plus CSS `transform-origin` and `transform-box`.
 * Stroking: stroke color and opacity, dash arrays and offsets, line caps, miter/round/bevel joins, miter limits, `pathLength` calibration and `vector-effect="non-scaling-stroke"`.
