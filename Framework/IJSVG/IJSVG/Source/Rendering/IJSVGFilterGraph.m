@@ -224,18 +224,15 @@ static NSArray<CIImage*>* IJSVGFilterMergeInputsForPrimitive(IJSVGFilterPrimitiv
     return inputs;
 }
 
+/// Retains the tint profile while applying filter opacity.
 static CGColorRef IJSVGFilterNewShadowTintForPrimitive(IJSVGFilterPrimitive* primitive)
 {
     CGFloat opacity = [IJSVGFloodFilterEffect opacityForPrimitive:primitive];
-    CGColorRef color = [IJSVGColor computeColorSpace:[IJSVGFloodFilterEffect colorForPrimitive:primitive]];
+    CGColorRef color = [IJSVGColor preservingColorSpace:[IJSVGFloodFilterEffect colorForPrimitive:primitive]];
     if (color == nil) {
         return NULL;
     }
-    CGFloat components[] = { CGColorGetComponents(color)[0], CGColorGetComponents(color)[1], CGColorGetComponents(color)[2], CGColorGetAlpha(color) * fmin(1, fmax(0, opacity)) };
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGColorRef tint = CGColorCreate(space, components);
-    CGColorSpaceRelease(space);
-    return tint;
+    return CGColorCreateCopyWithAlpha(color, CGColorGetAlpha(color) * fmin(1, fmax(0, opacity)));
 }
 
 static NSData* IJSVGFilterBlurPixelsForBitmap(CGContextRef bitmap, CGRect region, BOOL linearRGB, NSUInteger sourceCrops)

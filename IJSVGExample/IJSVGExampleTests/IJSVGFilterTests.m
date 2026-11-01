@@ -68,6 +68,17 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 }
 @end
 
+@interface IJSVGConvolutionTestDrawingPaint : IJSVGPaint
+@property (nonatomic, copy) void (^drawingBlock)(CGContextRef);
+@end
+
+@implementation IJSVGConvolutionTestDrawingPaint
+- (void)renderInContext:(CGContextRef)context
+{
+    self.drawingBlock(context);
+}
+@end
+
 @interface IJSVGFilterTests : XCTestCase
 @end
 
@@ -2129,6 +2140,28 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertEqualObjects(zero, [NSMutableData dataWithLength:zero.length]);
 }
 
+// Use a registered sRGB destination for the accelerated convolution reference.
+- (NSData*)renderConvolutionDocument:(NSString*)document
+{
+    IJSVG* svg = IJSVGTestSVGObject(document);
+    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, 30, 10, 8, 120, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(space);
+    XCTAssertTrue(bitmap != NULL);
+    if (bitmap == NULL) {
+        return nil;
+    }
+    IJSVGConvolutionTestDrawingPaint* root = [[IJSVGConvolutionTestDrawingPaint alloc] init];
+    root.drawingBlock = ^(CGContextRef context) {
+        [svg drawInRect:CGRectMake(0, 0, 30, 10) context:context];
+    };
+    [IJSVGFilterPaint renderPaint:root inBitmapContext:bitmap];
+    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(bitmap) length:1200];
+    CGContextRelease(bitmap);
+    return pixels;
+}
+
 - (void)testAcceleratedConvolutionMatchesScalarReference
 {
     NSString* content = @"<rect x=\"0\" y=\"0\" width=\"8\" height=\"8\" "
@@ -2157,8 +2190,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                   "preserveAlpha=\"%@\" "
                                                                   "kernelUnitLength=\"%@\"/>",
                     (long)width, (long)height, kernel, edge, preserve, step];
-                NSData* fast = [self render:[self filtered:primitive content:content] scale:1];
-                NSData* source = [self render:[self document:content] scale:1];
+                NSData* fast = [self renderConvolutionDocument:[self filtered:primitive content:content]];
+                NSData* source = [self renderConvolutionDocument:[self document:content]];
                 double (^sample)(int, int, int) = ^double(int x, int y, int channel) {
                     if ([edge isEqual:@"duplicate"]) {
                         x = MIN(29, MAX(0, x));

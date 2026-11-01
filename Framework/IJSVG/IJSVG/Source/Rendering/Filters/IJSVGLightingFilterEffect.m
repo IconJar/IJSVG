@@ -16,6 +16,7 @@ static const double IJSVGSpotLightConeTransition = .016;
 typedef struct {
     IJSVGNodeType lightType;
     BOOL specular;
+    BOOL extendedColor;
     double surfaceScale;
     double lightingConstant;
     double specularExponent;
@@ -132,6 +133,17 @@ static void IJSVGLightingInteriorNormals(const float* src, NSInteger w, NSIntege
     }
 }
 
+/// Preserves wide gamut components while retaining bounded legacy lighting.
+static float IJSVGLightingComponent(double value, BOOL extendedColor)
+{
+    if (!extendedColor) {
+        return IJSVGFilterClamp(value);
+    }
+    float component = (float)value;
+    return isfinite(component) ? component : 0.f;
+}
+
+/// Computes lighting in the extended interpolation space without gamut clipping.
 static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w, NSInteger h, IJSVGLightingParameters parameters)
 {
     IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(src, w, h, parameters.inputRegion, IJSVGFilterEdgeModeDuplicate);
@@ -201,10 +213,10 @@ static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w
                     intensity *= parameters.lightingConstant * MAX(0, dot);
                 }
                 NSInteger index = (y * w + x) * 4;
-                dst[index] = IJSVGFilterClamp(parameters.red * intensity);
-                dst[index + 1] = IJSVGFilterClamp(parameters.green * intensity);
-                dst[index + 2] = IJSVGFilterClamp(parameters.blue * intensity);
-                dst[index + 3] = parameters.specular ? MAX(dst[index], MAX(dst[index + 1], dst[index + 2])) : 1;
+                dst[index] = IJSVGLightingComponent(parameters.red * intensity, parameters.extendedColor);
+                dst[index + 1] = IJSVGLightingComponent(parameters.green * intensity, parameters.extendedColor);
+                dst[index + 2] = IJSVGLightingComponent(parameters.blue * intensity, parameters.extendedColor);
+                dst[index + 3] = parameters.specular ? IJSVGFilterClamp(MAX(dst[index], MAX(dst[index + 1], dst[index + 2]))) : 1;
             }
         }
     });
@@ -267,6 +279,7 @@ static IJSVGLightingVector IJSVGLightingColor(CGColorRef color, IJSVGFilterConte
     IJSVGLightingParameters parameters = {
         .lightType = light.type,
         .specular = specular,
+        .extendedColor = [IJSVGColor isDisplayP3Color:color] || red < 0 || red > 1 || green < 0 || green > 1 || blue < 0 || blue > 1,
         .surfaceScale = surface,
         .lightingConstant = constant,
         .specularExponent = exponent,

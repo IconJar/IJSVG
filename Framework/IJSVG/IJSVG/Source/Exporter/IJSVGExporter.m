@@ -1184,10 +1184,6 @@ NSString* IJSVGHash(NSString* key)
         CGColorRef aColor = color;
         CGFloat location = gradient.locations[index++];
 
-        //        if(sheet != nil) {
-        //            aColor = [sheet proposedColorForColor:aColor]
-        //        }
-
         // create the stop element
         IJSVGExportElement* stop = [[IJSVGExportElement alloc] initWithName:@"stop"];
 
@@ -2565,12 +2561,9 @@ static double IJSVGExporterAttributeSortIndex(const char* name, NSUInteger fallb
 {
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionColorConvertToSRGB)) {
         options |= IJSVGColorStringOptionConvertToSRGB;
-        color = [IJSVGColor computeColorSpace:color];
     }
-    NSString* colorString = nil;
     if (_respondsTo.stringForColor == 1) {
-        color = [IJSVGColor preservingColorSpace:color];
-        colorString = [_delegate svgExporter:self stringForColor:color flags:flag options:options];
+        NSString* colorString = [_delegate svgExporter:self stringForColor:color flags:flag options:options];
         if (colorString != nil) {
             return colorString;
         }

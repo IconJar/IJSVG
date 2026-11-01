@@ -42,6 +42,21 @@ static void P3AuditFromSRGB(const double rgb[3], double p3[3])
     p3[2] = P3AuditEncoded(.017082631 * r + .072397441 * g + .910519929 * b);
 }
 
+@interface P3AuditExportDelegate : NSObject <IJSVGExporterDelegate>
+@property (nonatomic, assign) CGColorRef expectedColor;
+@property (nonatomic, assign) BOOL sawOriginalColor;
+@property (nonatomic, assign) BOOL sawConversionOption;
+@end
+
+@implementation P3AuditExportDelegate
+- (NSString*)svgExporter:(IJSVGExporter*)exporter stringForColor:(CGColorRef)color flags:(IJSVGColorUsageTraits)flag options:(IJSVGColorStringOptions)options
+{
+    self.sawOriginalColor |= color == self.expectedColor;
+    self.sawConversionOption |= (options & IJSVGColorStringOptionConvertToSRGB) != 0;
+    return nil;
+}
+@end
+
 @interface IJSVGDisplayP3AuditTests : XCTestCase
 @end
 
@@ -704,6 +719,86 @@ static void P3AuditFromSRGB(const double rgb[3], double p3[3])
     }
 }
 
+/// Export delegates see the stored identity before optional compatibility conversion.
+- (void)testExportDelegatePreservesP3Identity
+{
+    IJSVG* svg = [self document:@"<rect width='16' height='16' fill='color(display-p3 1 .3 0)'/>"];
+    IJSVGGraphicsNode* node = (IJSVGGraphicsNode*)svg.rootNode.children.firstObject;
+    CGColorRef color = ((IJSVGColorNode*)node.fill).color;
+    XCTAssertTrue(color != NULL);
+    XCTAssertTrue([IJSVGColor preservingColorSpace:color] == color);
+    for (NSNumber* compatibility in @[ @NO, @YES ]) {
+        P3AuditExportDelegate* delegate = [[P3AuditExportDelegate alloc] init];
+        delegate.expectedColor = color;
+        IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeZero options:compatibility.boolValue ? IJSVGExporterOptionColorConvertToSRGB : 0];
+        exporter.delegate = delegate;
+        NSString* output = exporter.SVGString;
+        XCTAssertTrue(delegate.sawOriginalColor);
+        XCTAssertEqual(delegate.sawConversionOption, compatibility.boolValue);
+        XCTAssertEqual([output containsString:@"display-p3"], !compatibility.boolValue);
+    }
+}
+
+/// A P3 shadow must match the general graph in both narrow and wide destinations.
+- (void)testP3DropShadowMatchesGeneralEvaluator
+{
+    for (NSString* interpolation in @[ @"sRGB", @"linearRGB" ]) {
+        NSString* artwork = [NSString stringWithFormat:@"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='16' height='16' color-interpolation-filters='%@'><feDropShadow dx='5' dy='0' stdDeviation='1' flood-color='color(display-p3 1 .3 0 / .7)' flood-opacity='.6'/>EXTRA</filter></defs><rect x='1' y='1' width='4' height='14' fill='white' filter='url(#f)'/>", interpolation];
+        IJSVG* direct = [self document:[artwork stringByReplacingOccurrencesOfString:@"EXTRA" withString:@""]];
+        IJSVG* general = [self document:[artwork stringByReplacingOccurrencesOfString:@"EXTRA" withString:@"<feOffset/>"]];
+        for (id name in @[ (__bridge id)kCGColorSpaceSRGB, (__bridge id)kCGColorSpaceDisplayP3, (__bridge id)kCGColorSpaceExtendedDisplayP3 ]) {
+            BOOL extended = CFEqual((__bridge CFStringRef)name, kCGColorSpaceExtendedDisplayP3);
+            NSArray* actual = extended ? [self pixel:direct space:(__bridge CFStringRef)name] : [self imagePixel:direct space:(__bridge CFStringRef)name];
+            NSArray* expected = extended ? [self pixel:general space:(__bridge CFStringRef)name] : [self imagePixel:general space:(__bridge CFStringRef)name];
+            XCTAssertEqual(actual.count, 4);
+            XCTAssertEqual(expected.count, 4);
+            if (actual.count != 4 || expected.count != 4) {
+                continue;
+            }
+            XCTAssertGreaterThan([actual[3] doubleValue], .1);
+            for (NSUInteger channel = 0; channel < 4; channel++) {
+                XCTAssertEqualWithAccuracy([actual[channel] doubleValue], [expected[channel] doubleValue], .012);
+            }
+        }
+        IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
+        graph.filter = ((IJSVGGraphicsNode*)direct.rootNode.children.firstObject).filter;
+        graph.boundingBox = graph.viewPort = graph.extent = CGRectMake(0, 0, 16, 16);
+        graph.imageTransform = CGAffineTransformIdentity;
+        CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+        CGContextRef bitmap = CGBitmapContextCreate(NULL, 16, 16, 8, 64, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+        XCTAssertTrue(bitmap != NULL);
+        if (bitmap != NULL) {
+            XCTAssertNil([graph metalBlurJobForBitmap:bitmap]);
+            CGContextRelease(bitmap);
+        }
+        CGColorSpaceRelease(space);
+    }
+}
+
+/// Specular RGB may exceed the gamut while its coverage remains bounded.
+- (void)testP3SpecularLightingPreservesExtendedRGBAndBoundsAlpha
+{
+    double p3[] = { 1, .3, 0 }, rgb[3];
+    P3AuditToSRGB(p3, rgb);
+    for (NSString* interpolation in @[ @"sRGB", @"linearRGB" ]) {
+        for (NSNumber* constant in @[ @.5, @2 ]) {
+            IJSVG* svg = [self document:[NSString stringWithFormat:@"<defs><filter id='f' color-interpolation-filters='%@'><feSpecularLighting lighting-color='color(display-p3 1 .3 0)' surfaceScale='0' specularConstant='%@' specularExponent='1'><feDistantLight elevation='90'/></feSpecularLighting></filter></defs><rect width='16' height='16' filter='url(#f)'/>", interpolation, constant]];
+            double expected[3], alpha = 0;
+            for (NSUInteger channel = 0; channel < 3; channel++) {
+                expected[channel] = ([interpolation isEqualToString:@"linearRGB"] ? P3AuditLinear(rgb[channel]) : rgb[channel]) * constant.doubleValue;
+                alpha = fmax(alpha, expected[channel]);
+            }
+            alpha = fmin(1, alpha);
+            // Read in the primitive color space to compare premultiplied output directly.
+            NSArray* actual = [self pixel:svg space:[interpolation isEqualToString:@"linearRGB"] ? kCGColorSpaceExtendedLinearSRGB : kCGColorSpaceExtendedSRGB];
+            for (NSUInteger channel = 0; channel < 3; channel++) {
+                XCTAssertEqualWithAccuracy([actual[channel] doubleValue], expected[channel], .008);
+            }
+            XCTAssertEqualWithAccuracy([actual[3] doubleValue], alpha, .005);
+        }
+    }
+}
+
 /// Uses a flat surface and overhead light for an independent lighting and export reference.
 - (void)testLightingColorExportRoundTrip
 {
@@ -714,7 +809,8 @@ static void P3AuditFromSRGB(const double rgb[3], double p3[3])
         double expectedRGB[3], expectedP3[3];
         for (NSUInteger channel = 0; channel < 3; channel++) {
             double value = [interpolation isEqualToString:@"linearRGB"] ? P3AuditLinear(rgb[channel]) : rgb[channel];
-            value = fmin(1, fmax(0, value * .5));
+            // P3 lighting retains signed, extended interpolation components.
+            value *= .5;
             expectedRGB[channel] = [interpolation isEqualToString:@"linearRGB"] ? P3AuditEncoded(value) : value;
         }
         P3AuditFromSRGB(expectedRGB, expectedP3);

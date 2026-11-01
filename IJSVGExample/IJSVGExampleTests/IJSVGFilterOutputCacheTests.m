@@ -47,6 +47,17 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
 }
 @end
 
+@interface IJSVGCacheTestDrawingPaint : IJSVGPaint
+@property (nonatomic, copy) void (^drawingBlock)(CGContextRef);
+@end
+
+@implementation IJSVGCacheTestDrawingPaint
+- (void)renderInContext:(CGContextRef)context
+{
+    self.drawingBlock(context);
+}
+@end
+
 @interface IJSVGFilterOutputCacheTests : XCTestCase
 @end
 
@@ -309,13 +320,19 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
     NSData* firstPixels = nil;
     for (NSUInteger draw = 0; draw < 3; draw++) {
         CGContextClearRect(bitmap, CGRectMake(0, 0, 64, 64));
-        BOOL batched = [IJSVGFilterPaint renderBatchedPaints:[NSSet setWithArray:paints]
-                                                   inContext:bitmap
-                                                drawingBlock:^(CGContextRef context) {
-                                                    for (IJSVGFilterPaint* paint in paints) {
-                                                        [IJSVGFilterPaint renderPaint:paint inBitmapContext:context];
-                                                    }
-                                                }];
+        __block BOOL batched = NO;
+        IJSVGCacheTestDrawingPaint* root = [[IJSVGCacheTestDrawingPaint alloc] init];
+        root.drawingBlock = ^(CGContextRef destination) {
+            batched = [IJSVGFilterPaint renderBatchedPaints:[NSSet setWithArray:paints]
+                                                inContext:destination
+                                             drawingBlock:^(CGContextRef context) {
+                                                 for (IJSVGFilterPaint* paint in paints) {
+                                                     [IJSVGFilterPaint renderPaint:paint inBitmapContext:context];
+                                                 }
+                                             }];
+        };
+        // Register the destination before batch eligibility checks its profile.
+        [IJSVGFilterPaint renderPaint:root inBitmapContext:bitmap];
         XCTAssertTrue(batched);
         for (IJSVGCountingFilterSource* source in sources) {
             XCTAssertEqual(source.drawCount, 1U, @"Draw %lu must reuse the completed filter output", (unsigned long)draw);

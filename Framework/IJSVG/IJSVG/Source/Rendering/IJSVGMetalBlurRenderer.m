@@ -139,6 +139,14 @@ static BOOL IJSVGPrepareMetalBlur(void)
     if (!isfinite(offset.width) || !isfinite(offset.height) || color == NULL || CGColorGetNumberOfComponents(color) != 4) {
         return nil;
     }
+    // The shader reads tint components in the bitmap color profile.
+    // Keep mismatched profiles on the general evaluator so wide gamut colors
+    // are converted after compositing, without clipping intermediate values.
+    CGColorSpaceRef bitmapSpace = bitmap == NULL ? NULL : CGBitmapContextGetColorSpace(bitmap);
+    CGColorSpaceRef tintSpace = CGColorGetColorSpace(color);
+    if (bitmapSpace == NULL || tintSpace == NULL || !CFEqual(bitmapSpace, tintSpace)) {
+        return nil;
+    }
     IJSVGMetalBlurJob* job = [self jobForBitmap:bitmap region:region weights:weights linearRGB:linearRGB sourceCrops:1];
     if (job == nil) {
         return nil;

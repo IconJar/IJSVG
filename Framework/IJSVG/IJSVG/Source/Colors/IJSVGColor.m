@@ -375,6 +375,16 @@ static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* h
     if (![self isDisplayP3Color:color]) {
         return [self computeColorSpace:color];
     }
+
+    // Already normalized colors retain identity for symbolic paint delegates.
+    CFStringRef name = CGColorSpaceCopyName(CGColorGetColorSpace(color));
+    BOOL normalizedSpace = name != NULL && CFEqual(name, kCGColorSpaceExtendedDisplayP3);
+    if (name != NULL) {
+        CFRelease(name);
+    }
+    if (normalizedSpace) {
+        return color;
+    }
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceExtendedDisplayP3);
 
     // Both profiles use identical primaries and transfer functions. Rebuilding
