@@ -26,6 +26,7 @@
 
 @implementation IJSVGCIContextSlot
 
+/// Supplies a software fallback when Metal cannot create a context.
 - (CIContext*)context
 {
     dispatch_once(&_contextToken, ^{
@@ -33,6 +34,10 @@
         self->_supportsMetalKernels = device != nil && device.supportsDynamicLibraries;
         if (device != nil) {
             self->_context = [CIContext contextWithMTLDevice:device options:@ {}];
+        }
+        if (self->_context == nil) {
+            self->_supportsMetalKernels = NO;
+            self->_context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer : @YES}];
         }
     });
     return _context;

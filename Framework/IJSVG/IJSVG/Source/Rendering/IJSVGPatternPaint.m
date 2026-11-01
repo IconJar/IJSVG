@@ -224,8 +224,9 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     }
     scale = MIN(scale, 4096.f / MAX(bounds.size.width, bounds.size.height));
     scale = MIN(scale, sqrt(4194304.f / (bounds.size.width * bounds.size.height)));
-    if (_cachedImage == NULL || _cachedScale != scale || !CGRectEqualToRect(_cachedBounds, bounds)) {
-        CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(bounds.size.width * scale), ceil(bounds.size.height * scale), 8, 0, IJSVGDeviceRGBColorSpace(), (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRef space = [IJSVGColor extendedRGBColorSpace:NO];
+    if (_cachedImage == NULL || !CFEqual(CGImageGetColorSpace(_cachedImage), space) || _cachedScale != scale || !CGRectEqualToRect(_cachedBounds, bounds)) {
+        CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(bounds.size.width * scale), ceil(bounds.size.height * scale), 32, 0, space, kCGImageAlphaPremultipliedLast | kCGBitmapFloatComponents | kCGBitmapByteOrder32Host);
         if (bitmap == NULL) {
             return;
         }

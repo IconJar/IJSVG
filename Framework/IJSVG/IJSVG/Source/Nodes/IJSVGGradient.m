@@ -14,6 +14,7 @@
 #import <IJSVGGradientStops.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGXML.h>
+#include <float.h>
 #include <string.h>
 
 typedef struct {
@@ -49,14 +50,6 @@ static void IJSVGEvaluateSpread(void* info, const CGFloat* input, CGFloat* outpu
     CGFloat fraction = last.offset > first.offset ? MAX(0.f, MIN(1.f, (position - first.offset) / (last.offset - first.offset))) : 0.f;
     for (NSUInteger channel = 0; channel < 4; channel++) {
         output[channel] = first.components[channel] + fraction * (last.components[channel] - first.components[channel]);
-    }
-}
-
-static void IJSVGLinearizeGradientComponents(CGFloat* components)
-{
-    for (NSUInteger channel = 0; channel < 3; channel++) {
-        CGFloat value = components[channel];
-        components[channel] = value <= .04045 ? value / 12.92 : pow((value + .055) / 1.055, 2.4);
     }
 }
 
@@ -194,6 +187,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
 
 #pragma mark - Drawing
 
+/// Interpolates repeated stops without reducing wide gamut components.
 - (BOOL)drawSpreadInContext:(CGContextRef)ctx startPoint:(CGPoint)start endPoint:(CGPoint)end startRadius:(CGFloat)startRadius endRadius:(CGFloat)endRadius radial:(BOOL)radial
 {
     if (self.spreadMethod == IJSVGGradientSpreadMethodPad || self.colors.count == 0) {
@@ -259,17 +253,19 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
     data->reflect = self.spreadMethod == IJSVGGradientSpreadMethodReflect;
     data->count = count;
     BOOL linear = self.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB;
-    CGColorSpaceRef colorSpace = linear ? IJSVGColor.linearRGBColorSpace : IJSVGColor.defaultColorSpace;
+    BOOL wide = NO;
+    for (id stopColor in self.colors) {
+        wide |= [IJSVGColor isDisplayP3Color:(__bridge CGColorRef)stopColor];
+    }
+    CGColorSpaceRef colorSpace = wide ? [IJSVGColor extendedRGBColorSpace:linear] : (linear ? IJSVGColor.linearRGBColorSpace : IJSVGColor.defaultColorSpace);
     CGFloat previous = 0.f;
     for (NSUInteger index = 0; index < count; index++) {
         CGFloat offset = self.locations != NULL ? self.locations[index] : (count > 1 ? (CGFloat)index / (count - 1) : 0.f);
         data->stops[index].offset = previous = MAX(previous, MIN(1.f, offset));
-        CGColorRef color = [IJSVGColor computeColorSpace:(__bridge CGColorRef)self.colors[index]];
+        CGColorRef color = CGColorCreateCopyByMatchingToColorSpace(colorSpace, kCGRenderingIntentDefault, (__bridge CGColorRef)self.colors[index], NULL);
         if (color != NULL) {
             memcpy(data->stops[index].components, CGColorGetComponents(color), 4 * sizeof(CGFloat));
-            if (linear) {
-                IJSVGLinearizeGradientComponents(data->stops[index].components);
-            }
+            CGColorRelease(color);
         }
     }
     CGPoint first = CGPointMake(start.x + minimum * delta.x, start.y + minimum * delta.y);
@@ -286,7 +282,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
         return YES;
     }
     CGFloat domain[] = { 0.f, 1.f };
-    CGFloat range[] = { 0.f, 1.f, 0.f, 1.f, 0.f, 1.f, 0.f, 1.f };
+    CGFloat range[] = { -FLT_MAX, FLT_MAX, -FLT_MAX, FLT_MAX, -FLT_MAX, FLT_MAX, 0.f, 1.f };
     CGFunctionCallbacks callbacks = { 0, IJSVGEvaluateSpread, free };
     CGFunctionRef function = CGFunctionCreate(data, 1, domain, 4, range, &callbacks);
     if (function == NULL) {
@@ -454,6 +450,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
     return _CGGradient = [self newCGGradient];
 }
 
+/// Builds gradients in the declared interpolation space with extended components.
 - (CGGradientRef)newCGGradient
 {
     NSUInteger count = _colors.count;
@@ -461,7 +458,11 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
         return NULL;
     }
     BOOL linear = self.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB;
-    CGColorSpaceRef colorSpace = linear ? IJSVGColor.linearRGBColorSpace : IJSVGColor.defaultColorSpace;
+    BOOL wide = NO;
+    for (id stopColor in self.colors) {
+        wide |= [IJSVGColor isDisplayP3Color:(__bridge CGColorRef)stopColor];
+    }
+    CGColorSpaceRef colorSpace = wide ? [IJSVGColor extendedRGBColorSpace:linear] : (linear ? IJSVGColor.linearRGBColorSpace : IJSVGColor.defaultColorSpace);
     CGFloat stackComponents[32];
     CGFloat* components = count <= 8 ? stackComponents : calloc(count, 4 * sizeof(CGFloat));
     if (components != NULL) {
@@ -469,15 +470,13 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
         NSUInteger index = 0;
         for (id colorObject in _colors) {
             CGColorRef color = (__bridge CGColorRef)colorObject;
-            CGColorRef rgb = [IJSVGColor computeColorSpace:color];
+            CGColorRef rgb = CGColorCreateCopyByMatchingToColorSpace(colorSpace, kCGRenderingIntentDefault, color, NULL);
             if (rgb == nil) {
                 converted = NO;
                 break;
             }
             memcpy(components + index * 4, CGColorGetComponents(rgb), 4 * sizeof(CGFloat));
-            if (linear) {
-                IJSVGLinearizeGradientComponents(components + index * 4);
-            }
+            CGColorRelease(rgb);
             index++;
         }
         CGGradientRef gradient = converted ? CGGradientCreateWithColorComponents(colorSpace, components, _locations, count) : NULL;

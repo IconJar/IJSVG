@@ -20,9 +20,12 @@
 #import <IJSVGFilterGraph.h>
 #import <IJSVGFilterPaint.h>
 #import <IJSVGFilterSIMD.h>
+#import <IJSVGGradientPaint.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGPatternPaint.h>
 #import <IJSVGQuartzRenderer.h>
+#import <IJSVGRootPaint.h>
+#import <IJSVGShapePaint.h>
 #import <Metal/Metal.h>
 #import <limits.h>
 
@@ -739,6 +742,84 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
 @end
 
+/// Uses extended intermediates for wide gamut and unknown destination profiles.
+static BOOL IJSVGFilterUsesWideColor(CGContextRef context)
+{
+    // Bitmap accessors are invalid on screen, pattern and PDF contexts.
+    if (![IJSVGFilterPaint isRegisteredBitmapContext:context]) {
+        return YES;
+    }
+    CGColorSpaceRef space = CGBitmapContextGetColorSpace(context);
+    return space == NULL || CGColorSpaceIsWideGamutRGB(space) || CGColorSpaceUsesExtendedRange(space);
+}
+
+/// Finds resolved P3 paints before choosing a bounded source buffer.
+/// Image inputs remain conservative because their contents may be nested SVG.
+static BOOL IJSVGFilterPaintNeedsExtendedColor(IJSVGPaint* root)
+{
+    NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:root];
+    NSMutableSet<IJSVGPaint*>* visited = [NSMutableSet set];
+    while (pending.count != 0) {
+        IJSVGPaint* paint = pending.lastObject;
+        [pending removeLastObject];
+        if ([visited containsObject:paint]) {
+            continue;
+        }
+        [visited addObject:paint];
+        IJSVGGradient* gradient = nil;
+        if (paint.paintTraits & IJSVGPaintTraitShape) {
+            IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
+            if ([IJSVGColor isDisplayP3Color:shape.fillColor] || [IJSVGColor isDisplayP3Color:shape.strokeColor]) {
+                return YES;
+            }
+            gradient = shape.fillGradient;
+            if (shape.fillPaint != nil) {
+                [pending addObject:shape.fillPaint];
+            }
+            if (shape.strokePaint != nil) {
+                [pending addObject:shape.strokePaint];
+            }
+        }
+        if (paint.paintTraits & IJSVGPaintTraitGradient) {
+            gradient = ((IJSVGGradientPaint*)paint).gradient;
+        }
+        for (id color in gradient.colors) {
+            if ([IJSVGColor isDisplayP3Color:(__bridge CGColorRef)color]) {
+                return YES;
+            }
+        }
+        if ((paint.paintTraits & IJSVGPaintTraitRoot) && [IJSVGColor isDisplayP3Color:((IJSVGRootPaint*)paint).backgroundColor]) {
+            return YES;
+        }
+        if (paint.paintTraits & IJSVGPaintTraitImage) {
+            return YES;
+        }
+        if (paint.paintTraits & IJSVGPaintTraitFilter) {
+            for (IJSVGFilterPrimitive* primitive in ((IJSVGFilterPaint*)paint).filter.primitives) {
+                if (primitive.type == IJSVGNodeTypeFilterImage) {
+                    return YES;
+                }
+                for (NSString* key in @[ IJSVGAttributeFloodColor, IJSVGAttributeLightingColor ]) {
+                    if ([IJSVGColor isDisplayP3Color:[IJSVGColor colorFromString:primitive.parameters[key]]]) {
+                        return YES;
+                    }
+                }
+            }
+        }
+        [pending addObjectsFromArray:paint.children ?: @[]];
+        if (paint.maskPaint != nil) {
+            [pending addObject:paint.maskPaint];
+        }
+        if (paint.paintTraits & IJSVGPaintTraitPattern) {
+            IJSVGPaint* pattern = ((IJSVGPatternPaint*)paint).pattern;
+            if (pattern != nil) {
+                [pending addObject:pattern];
+            }
+        }
+    }
+    return NO;
+}
+
 @implementation IJSVGFilterPaint
 
 - (IJSVGPaintTraits)paintTraits
@@ -771,6 +852,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     }
 }
 
+/// Preserves wide gamut backdrop samples until final destination conversion.
 + (void)drawBackgroundForPaint:(IJSVGPaint*)paint context:(CGContextRef)context drawingBlock:(void (^)(CGContextRef))drawingBlock
 {
     CGAffineTransform transform = CGContextGetCTM(context);
@@ -781,8 +863,10 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     CGFloat scale = MIN(1.f, MIN(4096.f / bounds.size.width, 4096.f / bounds.size.height));
     size_t width = MAX(1, ceil(bounds.size.width * scale));
     size_t height = MAX(1, ceil(bounds.size.height * scale));
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, 0, space, kCGImageAlphaPremultipliedLast);
+    BOOL wide = IJSVGFilterUsesWideColor(context) || IJSVGFilterPaintNeedsExtendedColor(paint);
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(wide ? kCGColorSpaceExtendedDisplayP3 : kCGColorSpaceSRGB);
+    CGBitmapInfo info = kCGImageAlphaPremultipliedLast | (wide ? kCGBitmapFloatComponents | kCGBitmapByteOrder32Host : 0);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, wide ? 32 : 8, 0, space, info);
     CGColorSpaceRelease(space);
     if (bitmap == NULL) {
         return;
@@ -1052,7 +1136,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
                 if (independentPixels || (entry.renderedImage == image && !entry.hasAtlasBacking)) {
                     copy = CGImageRetain(image);
                 } else {
-                    CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, width * 4, CGImageGetColorSpace(image), kCGImageAlphaPremultipliedLast);
+                    CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, CGImageGetBitsPerComponent(image), 0, CGImageGetColorSpace(image), CGImageGetBitmapInfo(image));
                     if (bitmap != NULL) {
                         CGContextSetBlendMode(bitmap, kCGBlendModeCopy);
                         CGContextDrawImage(bitmap, CGRectMake(0, 0, width, height), image);
@@ -1086,10 +1170,16 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return IJSVGQuartzFilterBatchEligible(root, paints) ? paints.copy : nil;
 }
 
+/// Batches only the supported sRGB intermediate pipeline.
 + (BOOL)renderBatchedPaints:(NSSet<IJSVGFilterPaint*>*)eligiblePaints inContext:(CGContextRef)context drawingBlock:(void (^)(CGContextRef))drawingBlock
 {
-    if (context == NULL || IJSVGCurrentFilterBatch != nil || eligiblePaints.count == 0) {
+    if (context == NULL || IJSVGFilterUsesWideColor(context) || IJSVGCurrentFilterBatch != nil || eligiblePaints.count == 0) {
         return NO;
+    }
+    for (IJSVGFilterPaint* paint in eligiblePaints) {
+        if (IJSVGFilterPaintNeedsExtendedColor(paint)) {
+            return NO;
+        }
     }
     CGContextRef scratch = IJSVGFilterNewCollectionContext(context);
     if (scratch == NULL) {
@@ -1193,14 +1283,15 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return YES;
 }
 
+/// Keeps FillPaint and StrokePaint inputs unbounded until primitive processing.
 - (CIImage*)paintImageForStroke:(BOOL)stroke graph:(IJSVGFilterGraph*)graph
 {
     IJSVGNode* paint = stroke ? self.sourceNode.stroke : self.sourceNode.fill;
     if (paint == nil) {
         return CIImage.emptyImage;
     }
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef bitmap = CGBitmapContextCreate(NULL, graph.extent.size.width, graph.extent.size.height, 8, 0, space, kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceExtendedSRGB);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, graph.extent.size.width, graph.extent.size.height, 32, 0, space, kCGImageAlphaPremultipliedLast | kCGBitmapFloatComponents | kCGBitmapByteOrder32Host);
     CGColorSpaceRelease(space);
     if (bitmap == NULL) {
         return CIImage.emptyImage;
@@ -1504,12 +1595,13 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         CGImageRef image = NULL;
 
         // Shared output storage lets Quartz read completed Metal pixels directly.
-        if (supportsMetalKernels) {
+        BOOL extended = CGColorSpaceUsesExtendedRange(colorSpace);
+        if (supportsMetalKernels && !extended) {
             image = IJSVGFilterNewSharedMetalImage(output, outputExtent, colorSpace);
         }
         BOOL independentPixels = image != NULL;
         if (image == NULL) {
-            image = [context createCGImage:output fromRect:outputExtent format:kCIFormatRGBA8 colorSpace:colorSpace];
+            image = [context createCGImage:output fromRect:outputExtent format:extended ? kCIFormatRGBAf : kCIFormatRGBA8 colorSpace:colorSpace];
         }
 
         if (image != NULL) {
@@ -1523,8 +1615,8 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         }
     }];
     if (!hasContext) {
-        // Preserve the previous unfiltered fallback on systems without Metal,
-        // while allowing CPU filters to execute without acquiring a CI context.
+        // Preserve artwork only if neither Metal nor software Core Image
+        // can provide a context.
         if (batch.collecting) {
             batch.invalid = YES;
             return;
@@ -1652,10 +1744,13 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return YES;
 }
 
+/// Keeps wide gamut intermediates on the color managed filter path.
 - (void)renderGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx region:(CGRect)region workRect:(CGRect)workRect pixelSize:(CGSize)pixelSize scale:(CGFloat)scale
 {
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef bitmap = CGBitmapContextCreate(NULL, pixelSize.width, pixelSize.height, 8, 0, colorSpace, kCGImageAlphaPremultipliedLast);
+    BOOL wide = IJSVGFilterUsesWideColor(ctx) || IJSVGFilterPaintNeedsExtendedColor(self);
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(wide ? kCGColorSpaceExtendedDisplayP3 : kCGColorSpaceSRGB);
+    CGBitmapInfo bitmapInfo = kCGImageAlphaPremultipliedLast | (wide ? kCGBitmapFloatComponents | kCGBitmapByteOrder32Host : 0);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, pixelSize.width, pixelSize.height, wide ? 32 : 8, 0, colorSpace, bitmapInfo);
 
     if (bitmap == NULL) {
         CGColorSpaceRelease(colorSpace);
@@ -1727,11 +1822,11 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     if (self.usesBackground && IJSVGFilterRenderDepth == 1 && !IJSVGCurrentFilterBatch.collecting && ctx == IJSVGFilterBitmapContext && (ctx != IJSVGFilterBackgroundContext || CGRectIsInfinite(IJSVGFilterBackgroundClip))) {
         backdrop = ctx;
     }
-    CGImageRef localImage = [graph newCGImageForWhiteAlpha:bitmap];
-    if (localImage == NULL && backdrop != NULL) {
+    CGImageRef localImage = wide ? NULL : [graph newCGImageForWhiteAlpha:bitmap];
+    if (!wide && localImage == NULL && backdrop != NULL) {
         localImage = IJSVGFilterSIMDNewComposite(bitmap, backdrop, graph, region);
     }
-    if (localImage == NULL) {
+    if (!wide && localImage == NULL) {
         localImage = IJSVGFilterSIMDNewLocalFilter(bitmap, graph, region);
     }
     if ([self renderDirectImage:localImage context:ctx region:region workRect:workRect pixelSize:pixelSize]) {
@@ -1742,12 +1837,12 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
     // Direct blur/shadow rendering: batch Metal work when possible, otherwise
     // use the measured CPU/Metal blur policy for the graph.
-    if ([self collectMetalBitmap:bitmap graph:graph workRect:workRect]) {
+    if (!wide && [self collectMetalBitmap:bitmap graph:graph workRect:workRect]) {
         CGContextRelease(bitmap);
         CGColorSpaceRelease(colorSpace);
         return;
     }
-    CGImageRef directBlur = [graph newCGImageForDirectBlur:bitmap];
+    CGImageRef directBlur = wide ? NULL : [graph newCGImageForDirectBlur:bitmap];
     if ([self renderDirectImage:directBlur context:ctx region:region workRect:workRect pixelSize:pixelSize]) {
         CGContextRelease(bitmap);
         CGColorSpaceRelease(colorSpace);
@@ -1900,7 +1995,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     // Reset it only when preparing output for a new render.
     _outputSignature = nil;
     if (!IJSVGFilterHasCachingAncestor && self.canCacheOutput) {
-        _outputSignature = @[ IJSVGValueWithRect(workRect), IJSVGValueWithSize(pixelSize), IJSVGValueWithRect(region), IJSVGValueWithRect(self.boundingBox), IJSVGValueWithRect(self.viewPort), IJSVGValueWithRect(self.sourcePaint.frame), @(self.backingScaleFactor), @(self.renderQuality), @(IJSVGFilterRenderDepth == 1) ];
+        _outputSignature = @[ @(IJSVGFilterUsesWideColor(ctx) || IJSVGFilterPaintNeedsExtendedColor(self)), IJSVGValueWithRect(workRect), IJSVGValueWithSize(pixelSize), IJSVGValueWithRect(region), IJSVGValueWithRect(self.boundingBox), IJSVGValueWithRect(self.viewPort), IJSVGValueWithRect(self.sourcePaint.frame), @(self.backingScaleFactor), @(self.renderQuality), @(IJSVGFilterRenderDepth == 1) ];
         IJSVGFilterCachedImage* output = [IJSVGFilterOutputCache() objectForKey:_outputCacheKey];
         if ([output.signature isEqual:_outputSignature]) {
             if (batch.collecting) {

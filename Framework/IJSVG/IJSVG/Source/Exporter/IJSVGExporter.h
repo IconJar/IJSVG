@@ -55,6 +55,9 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
 
     // Omits outside artwork without changing source nodes. Excluded from .all.
     IJSVGExporterOptionRemoveNodesOutsideViewBox = 1 << 24,
+
+    /// Converts authored colors to sRGB for older SVG consumers.
+    IJSVGExporterOptionColorConvertToSRGB = 1 << 25,
     IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups | IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup | IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups | IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionCompressOutput | IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes | IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionRemoveXMLDeclaration | IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths | IJSVGExporterOptionRoundTransforms | IJSVGExporterOptionRemoveDefaultValues | IJSVGExporterOptionConvertStrokesToPaths | IJSVGExporterOptionCompressFilters
 };
 

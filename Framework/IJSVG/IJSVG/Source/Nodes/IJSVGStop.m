@@ -50,6 +50,7 @@
     [self consumeOffset:context->values[IJSVGNodeAttributeOffset] color:context->values[IJSVGNodeAttributeStopColor] opacity:context->values[IJSVGNodeAttributeStopOpacity] parser:context->parser];
 }
 
+/// Multiplies authored alpha by stop opacity on the direct XML path.
 - (void)consumeXMLAttributes:(IJSVGXMLAttributeList)attributes parser:(IJSVGParser*)parser
 {
     IJSVGXMLAttribute* colorAttribute = NULL;
@@ -88,11 +89,12 @@
     IJSVGColorNode* fill = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
     CGFloat opacity = self.fillOpacity.value;
     if (opacity != 1.f) {
-        fill.color = [IJSVGColor changeAlphaOnColor:color to:opacity];
+        fill.color = [IJSVGColor changeAlphaOnColor:color to:CGColorGetAlpha(color) * fmin(1, fmax(0, opacity))];
     }
     self.fill = fill;
 }
 
+/// Combines color alpha and stop opacity exactly once.
 - (void)consumeOffset:(NSString*)offset color:(NSString*)stopColor opacity:(NSString*)opacityValue parser:(IJSVGParser*)parser
 {
     IJSVGStop* node = self;
@@ -115,7 +117,7 @@
         } else {
             CGFloat opacity = node.fillOpacity.value;
             if (opacity != 1.f) {
-                colorNode.color = [IJSVGColor changeAlphaOnColor:color to:opacity];
+                colorNode.color = [IJSVGColor changeAlphaOnColor:color to:CGColorGetAlpha(color) * fmin(1, fmax(0, opacity))];
             }
         }
         node.fill = colorNode;

@@ -15,9 +15,10 @@
     CGColorRelease(_replacementColor);
 }
 
+/// Retains the replacement profile and components.
 - (void)setReplacementColor:(CGColorRef)replacementColor
 {
-    CGColorRef retained = CGColorRetain([IJSVGColor computeColorSpace:replacementColor]);
+    CGColorRef retained = CGColorRetain([IJSVGColor preservingColorSpace:replacementColor]);
     CGColorRelease(_replacementColor);
     _replacementColor = retained;
 }
@@ -60,10 +61,11 @@
     }
 }
 
+/// Registers replacements using profile aware color identity.
 - (void)replaceColor:(CGColorRef)replaceColor withColor:(CGColorRef)withColor traits:(IJSVGColorUsageTraits)traits
 {
-    replaceColor = [IJSVGColor computeColorSpace:replaceColor];
-    withColor = [IJSVGColor computeColorSpace:withColor];
+    replaceColor = [IJSVGColor preservingColorSpace:replaceColor];
+    withColor = [IJSVGColor preservingColorSpace:withColor];
     IJSVGReplacementColor* repColor = [self replacementColorForColor:replaceColor withColor:withColor];
     if (repColor == nil) {
         repColor = [[IJSVGReplacementColor alloc] init];
@@ -95,12 +97,13 @@
     return nil;
 }
 
+/// Looks up replacements without clipping wide gamut colors.
 - (CGColorRef)colorForColor:(CGColorRef)color matchingTraits:(IJSVGColorUsageTraits)traits
 {
     if ([self matchesReplacementTraits:traits] == NO) {
         return nil;
     }
-    color = [IJSVGColor computeColorSpace:color];
+    color = [IJSVGColor preservingColorSpace:color];
     IJSVGReplacementColor* repColor = nil;
     if ((repColor = [self replacementColorForColor:color matchingTraits:traits]) != nil) {
         return repColor.replacementColor;

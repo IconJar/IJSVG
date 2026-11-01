@@ -19,10 +19,24 @@
 
 NSString* const IJSVGColorCurrentColorName = @"currentColor";
 
+/// Reads CSS channels and validates separators for the selected function.
 static NSInteger IJSVGParseColorComponents(const IJSVGCSSComponents* components, CGFloat channels[4], BOOL percentages[4], BOOL* legacy)
 {
     const IJSVGCSSComponent* root = components->values;
     NSUInteger index = 1;
+    if (root->function == IJSVGCSSFunctionColor) {
+        if (root->next < 3) {
+            return -1;
+        }
+        const IJSVGCSSComponent* profile = components->values + index;
+        if (profile->kind != IJSVGCSSComponentIdentifier || profile->length != 10 || strncasecmp(components->bytes + profile->offset, "display-p3", 10) != 0) {
+            return -1;
+        }
+        index = profile->next;
+        if (index >= root->next || !components->values[index].precedingWhitespace) {
+            return -1;
+        }
+    }
     *legacy = NO;
     channels[3] = 1;
     for (NSUInteger channel = 0; channel < 4; channel++) {
@@ -81,6 +95,9 @@ static NSInteger IJSVGParseColorComponents(const IJSVGCSSComponents* components,
         const IJSVGCSSComponent* separator = components->values + index;
         if (channel == 0) {
             *legacy = separator->kind == IJSVGCSSComponentDelimiter && separator->symbol == IJSVGCSSSymbolComma;
+            if (*legacy && root->function == IJSVGCSSFunctionColor) {
+                return -1;
+            }
         }
         if (channel == 3) {
             return -1;
@@ -313,6 +330,60 @@ static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* h
 
 @implementation IJSVGColor
 
+/// Returns the shared profile used for Display P3 colors.
++ (CGColorSpaceRef)displayP3ColorSpace
+{
+    static CGColorSpaceRef space;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        space = CGColorSpaceCreateWithName(kCGColorSpaceDisplayP3);
+    });
+    return space;
+}
+
+/// Returns extended interpolation spaces without clipping wide gamut stops.
++ (CGColorSpaceRef)extendedRGBColorSpace:(BOOL)linear
+{
+    static CGColorSpaceRef encodedSpace;
+    static CGColorSpaceRef linearSpace;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        encodedSpace = CGColorSpaceCreateWithName(kCGColorSpaceExtendedSRGB);
+        linearSpace = CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearSRGB);
+    });
+    return linear ? linearSpace : encodedSpace;
+}
+
+/// Recognizes both bounded and extended Display P3 colors.
++ (BOOL)isDisplayP3Color:(CGColorRef)color
+{
+    CGColorSpaceRef space = color == NULL ? NULL : CGColorGetColorSpace(color);
+    if (space == NULL) {
+        return NO;
+    }
+    CFStringRef name = CGColorSpaceCopyName(space);
+    BOOL result = name != NULL && (CFEqual(name, kCGColorSpaceDisplayP3) || CFEqual(name, kCGColorSpaceExtendedDisplayP3));
+    if (name != NULL) {
+        CFRelease(name);
+    }
+    return result;
+}
+
+/// Keeps authored P3 components intact in color storage and replacements.
++ (CGColorRef)preservingColorSpace:(CGColorRef)color
+{
+    if (![self isDisplayP3Color:color]) {
+        return [self computeColorSpace:color];
+    }
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceExtendedDisplayP3);
+
+    // Both profiles use identical primaries and transfer functions. Rebuilding
+    // also gives parsed and supplied colors the same Core Graphics metadata.
+    CGColorRef normalized = CGColorCreate(space, CGColorGetComponents(color));
+    CGColorSpaceRelease(space);
+    return normalized == NULL ? NULL : (CGColorRef)CFAutorelease(normalized);
+}
+
 + (CGColorSpaceRef)linearRGBColorSpace
 {
     static CGColorSpaceRef space;
@@ -470,6 +541,7 @@ static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* h
     return CGColorCreate(IJSVGColor.defaultColorSpace, components);
 }
 
+/// Parses authored CSS colors while preserving their profile.
 + (CGColorRef)colorFromString:(NSString*)string
 {
     // swap over to C for performance
@@ -519,6 +591,17 @@ static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* h
                 CGFloat alpha = percentages[3] ? channels[3] / 100.f : channels[3];
                 alpha = fmin(1.f, fmax(0.f, alpha));
                 switch (function) {
+                    case IJSVGCSSFunctionColor: {
+                        for (NSUInteger channel = 0; channel < 3; channel++) {
+                            channels[channel] /= percentages[channel] ? 100.f : 1.f;
+                        }
+                        channels[3] = alpha;
+                        CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceExtendedDisplayP3);
+                        CGColorRef parsed = CGColorCreate(space, channels);
+                        CGColorSpaceRelease(space);
+                        color = parsed == NULL ? NULL : (CGColorRef)CFAutorelease(parsed);
+                        break;
+                    }
                     case IJSVGCSSFunctionRGB:
                     case IJSVGCSSFunctionRGBA: {
                         for (NSUInteger channel = 0; channel < 3; channel++) {
@@ -549,7 +632,7 @@ static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* h
         }
         IJSVGCSSComponentsRelease(&components);
         free(str);
-        return color == nil ? nil : [self computeColorSpace:color];
+        return color == nil ? nil : [self preservingColorSpace:color];
     }
 
     // is simply a clear color, dont fill
@@ -579,9 +662,15 @@ static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* h
     return [self colorStringFromColor:color options:options];
 }
 
+/// Serializes P3 colors unless compatibility conversion is requested.
 + (NSString*)colorStringFromColor:(CGColorRef)color options:(IJSVGColorStringOptions)options
 {
-    // convert to RGB
+    if ([self isDisplayP3Color:color] && (options & (IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionConvertToSRGB)) == 0) {
+        const CGFloat* values = CGColorGetComponents(color);
+        return [NSString stringWithFormat:@"color(display-p3 %.9g %.9g %.9g / %.9g)", values[0], values[1], values[2], values[3]];
+    }
+
+    // Explicit compatibility output converts before formatting RGB components.
     color = [self computeColorSpace:color];
     CGFloat components[4] = { 0 };
     if (color != NULL) {
@@ -967,9 +1056,10 @@ static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* h
     return result == NULL ? NULL : (CGColorRef)CFAutorelease(result);
 }
 
+/// Recognizes supported color function prefixes.
 + (BOOL)isColor:(NSString*)string
 {
-    return [string hasPrefix:@"#"] || [string hasPrefix:@"rgb"];
+    return [string hasPrefix:@"#"] || [string hasPrefix:@"rgb"] || [string.lowercaseString hasPrefix:@"color("];
 }
 
 + (BOOL)isHex:(NSString*)string

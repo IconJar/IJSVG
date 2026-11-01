@@ -40,6 +40,7 @@ typedef NS_ENUM(uint8_t, IJSVGCSSFunction) {
     IJSVGCSSFunctionHSL,
     IJSVGCSSFunctionHSLA,
     IJSVGCSSFunctionOKLCH,
+    IJSVGCSSFunctionColor,
     IJSVGCSSFunctionMatrix,
     IJSVGCSSFunctionTranslate,
     IJSVGCSSFunctionTranslateX,

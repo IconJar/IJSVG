@@ -738,4 +738,40 @@ static NSString* IJSVGNestedFill(NSString* css, BOOL useCircle)
     XCTAssertEqualObjects([[retained styleByResolvingVariables:@{ @"--missing" : @"green" }] property:@"fill"], @"green");
 }
 
+/// Checks compound class indexing across alternatives, missing classes and later rules.
+- (void)testCompoundClassIndexPreservesMatchingAndCascade
+{
+    NSMutableString* css = [NSMutableString stringWithString:@"rect { stroke: black } "];
+    for (NSUInteger index = 0; index < 128; index++) {
+        [css appendFormat:@".tile.c%lu, .alternate.a%lu { fill: color(display-p3 1 .3 0); stroke-width: %lu } ", index, index, index + 1];
+    }
+    IJSVGStyleSheet* sheet = IJSVGTestStyleSheet(css);
+    IJSVGStyleSheetSelectorRecord* node = [[IJSVGStyleSheetSelectorRecord alloc] init];
+    node.name = @"rect";
+    for (NSUInteger index = 0; index < 128; index++) {
+        for (NSString* common in @[ @"tile", @"alternate" ]) {
+            NSString* specific = [NSString stringWithFormat:@"%@%lu", [common isEqualToString:@"tile"] ? @"c" : @"a", index];
+            node.classNameList = [NSSet setWithObjects:common, specific, nil];
+            IJSVGStyleSheetStyle* style = [sheet styleForNode:node];
+            XCTAssertEqualObjects([style property:@"fill"], @"color(display-p3 1 .3 0)");
+            NSString* expectedWidth = [NSString stringWithFormat:@"%lu", index + 1];
+            XCTAssertEqualObjects([style property:@"stroke-width"], expectedWidth);
+            XCTAssertEqualObjects([style property:@"stroke"], @"black");
+            node.classNameList = [NSSet setWithObject:specific];
+            XCTAssertNil([[sheet styleForNode:node] property:@"fill"]);
+            node.classNameList = [NSSet setWithObject:common];
+            XCTAssertNil([[sheet styleForNode:node] property:@"fill"]);
+        }
+    }
+    [sheet parseStyleBlock:@".tile.c1, #selected { fill: blue } .tile.c1.c2 { fill: green } * { opacity: .5 }"];
+    node.classNameList = [NSSet setWithObjects:@"tile", @"c1", nil];
+    XCTAssertEqualObjects([[sheet styleForNode:node] property:@"fill"], @"blue");
+    node.classNameList = [NSSet setWithObjects:@"tile", @"c1", @"c2", nil];
+    XCTAssertEqualObjects([[sheet styleForNode:node] property:@"fill"], @"green");
+    node.classNameList = [NSSet set];
+    node.identifier = @"selected";
+    XCTAssertEqualObjects([[sheet styleForNode:node] property:@"fill"], @"blue");
+    XCTAssertEqualObjects([[sheet styleForNode:node] property:@"opacity"], @".5");
+}
+
 @end

@@ -235,11 +235,12 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     return [self pixelsForImage:image bounds:self.extent];
 }
 
+/// Reads extended components in the primitive interpolation space.
 - (NSMutableData*)pixelsForImage:(CIImage*)image bounds:(CGRect)bounds
 {
     size_t width = bounds.size.width, height = bounds.size.height;
     NSMutableData* data = [NSMutableData dataWithLength:width * height * 4 * sizeof(float)];
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceExtendedLinearSRGB : kCGColorSpaceExtendedSRGB);
 
     // Flip the image so the CPU receives rows in the expected order.
     CGFloat flipY = CGRectGetMinY(bounds) + CGRectGetMaxY(bounds);
@@ -254,9 +255,10 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     return [self imageForPixels:pixels bounds:self.extent];
 }
 
+/// Tags floating point filter pixels with their extended profile.
 - (CIImage*)imageForPixels:(NSData*)pixels bounds:(CGRect)bounds
 {
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceExtendedLinearSRGB : kCGColorSpaceExtendedSRGB);
     CIImage* image = [CIImage imageWithBitmapData:pixels bytesPerRow:bounds.size.width * 4 * sizeof(float) size:bounds.size format:kCIFormatRGBAf colorSpace:space];
     CGColorSpaceRelease(space);
 
@@ -290,23 +292,25 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
 
 // Convert colors through Core Image without reading pixels back to the CPU.
 
+/// Converts to the declared interpolation space without gamut clipping.
 - (CIImage*)imageInPrimitiveColorSpace:(CIImage*)image
 {
     if (self.inputIsAlphaOnly) {
         return image;
     }
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceExtendedLinearSRGB : kCGColorSpaceExtendedSRGB);
     CIImage* result = [image imageByColorMatchingWorkingSpaceToColorSpace:space];
     CGColorSpaceRelease(space);
     return result;
 }
 
+/// Restores the working space after primitive interpolation.
 - (CIImage*)imageFromPrimitiveColorSpace:(CIImage*)image
 {
     if (self.outputIsAlphaOnly) {
         return image;
     }
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceExtendedLinearSRGB : kCGColorSpaceExtendedSRGB);
     CIImage* result = [image imageByColorMatchingColorSpaceToWorkingSpace:space];
     CGColorSpaceRelease(space);
     return result;
@@ -329,10 +333,11 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     return [input imageByApplyingTransform:CGAffineTransformMakeTranslation(dx * units.width, dy * units.height)];
 }
 
+/// Builds flood images using the authored color profile.
 - (CIImage*)floodWithColor:(CGColorRef)color opacity:(CGFloat)opacity
 {
-    color = [IJSVGColor computeColorSpace:color] ?: IJSVGColor.blackColor;
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    color = [IJSVGColor preservingColorSpace:color] ?: IJSVGColor.blackColor;
+    CGColorSpaceRef space = CGColorSpaceRetain(CGColorGetColorSpace(color));
     CIColor* ciColor = [CIColor colorWithRed:CGColorGetComponents(color)[0] green:CGColorGetComponents(color)[1] blue:CGColorGetComponents(color)[2] alpha:CGColorGetAlpha(color) * IJSVGFilterClamp(opacity) colorSpace:space];
     CGColorSpaceRelease(space);
     return [CIImage imageWithColor:ciColor];

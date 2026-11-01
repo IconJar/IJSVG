@@ -14,6 +14,7 @@
 
 @implementation IJSVGImageFilterEffect
 
+/// Preserves authored color until filter processing or destination conversion.
 - (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive inputs:(NSArray<CIImage*>*)inputs region:(CGRect)region context:(IJSVGFilterContext*)context
 {
     if (context.imageProvider != nil) {
@@ -27,8 +28,8 @@
     if (!IJSVGFilterValidRect(bounds)) {
         return CIImage.emptyImage;
     }
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef bitmap = CGBitmapContextCreate(NULL, bounds.size.width, bounds.size.height, 8, 0, space, kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceExtendedSRGB);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, bounds.size.width, bounds.size.height, 32, 0, space, kCGImageAlphaPremultipliedLast | kCGBitmapFloatComponents | kCGBitmapByteOrder32Host);
     CGColorSpaceRelease(space);
     if (bitmap == NULL) {
         return CIImage.emptyImage;

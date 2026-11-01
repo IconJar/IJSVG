@@ -402,6 +402,7 @@ IJSVGPaint* IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintKind kind)
     [paint renderInContext:ctx];
 }
 
+/// Renders mask coverage in its declared interpolation space before clipping.
 + (void)clipContextWithMask:(IJSVGPaint*)mask toPaint:(IJSVGPaint*)paint inContext:(CGContextRef)ctx drawingBlock:(dispatch_block_t)drawingBlock
 {
     CGFloat scale = MAX(paint.backingScaleFactor, 1.f);
@@ -444,10 +445,15 @@ IJSVGPaint* IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintKind kind)
     } else {
         BOOL alphaMask = (mask.sourceNode.nodeTraits & IJSVGNodeTypeTraitMask) != 0 && ((IJSVGMask*)mask.sourceNode).maskType == IJSVGMaskTypeAlpha;
 
-        // A color image supplies its alpha to ClipToMask, a gray image supplies
-        // luminance. Preserve RGB here so black alpha mask content stays opaque.
-        CGColorSpaceRef colorSpace = alphaMask ? IJSVGDeviceRGBColorSpace() : IJSVGDeviceGrayColorSpace();
-        CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(frame.size.width * scale), ceil(frame.size.height * scale), 8, 0, colorSpace, alphaMask ? kCGImageAlphaPremultipliedLast : kCGImageAlphaNone);
+        // Preserve extended channels until luminance has been calculated.
+        // Device gray conversion applies a profile transfer curve instead of
+        // the SVG luminance coefficients and loses the declared interpolation.
+        CGColorSpaceRef colorSpace = alphaMask ? IJSVGDeviceRGBColorSpace() : [IJSVGColor extendedRGBColorSpace:NO];
+        CGBitmapInfo bitmapInfo = (CGBitmapInfo)kCGImageAlphaPremultipliedLast;
+        if (!alphaMask) {
+            bitmapInfo |= kCGBitmapFloatComponents | kCGBitmapByteOrder32Little;
+        }
+        CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(frame.size.width * scale), ceil(frame.size.height * scale), alphaMask ? 8 : 32, 0, colorSpace, bitmapInfo);
         if (bitmap == NULL) {
             return;
         }
@@ -457,7 +463,40 @@ IJSVGPaint* IJSVGCreateBuiltInPaint(IJSVGBuiltInPaintKind kind)
             CGContextScaleCTM(bitmap, scale, scale);
             CGContextTranslateCTM(bitmap, -bounds.origin.x, -bounds.origin.y);
             [mask renderInContext:bitmap];
-            image = CGBitmapContextCreateImage(bitmap);
+            if (alphaMask) {
+                image = CGBitmapContextCreateImage(bitmap);
+            } else {
+                size_t width = CGBitmapContextGetWidth(bitmap);
+                CGContextRef gray = CGBitmapContextCreate(NULL, width, height, 8, 0, IJSVGDeviceGrayColorSpace(), kCGImageAlphaNone);
+                if (gray != NULL) {
+                    BOOL linear = mask.sourceNode.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB;
+                    const UInt8* source = CGBitmapContextGetData(bitmap);
+                    UInt8* destination = CGBitmapContextGetData(gray);
+                    size_t grayStride = CGBitmapContextGetBytesPerRow(gray);
+                    for (size_t y = 0; y < height; y++) {
+                        const float* row = (const float*)(source + y * stride);
+                        for (size_t x = 0; x < width; x++) {
+                            const float* pixel = row + x * 4;
+                            double alpha = pixel[3];
+                            double luminance = 0;
+                            const double weights[] = { .2125, .7154, .0721 };
+                            for (NSUInteger channel = 0; channel < 3; channel++) {
+                                double value = alpha > 0 ? pixel[channel] / alpha : 0;
+                                if (linear) {
+                                    double magnitude = fabs(value);
+                                    value = copysign(magnitude <= .04045 ? magnitude / 12.92 : pow((magnitude + .055) / 1.055, 2.4), value);
+                                }
+                                luminance += weights[channel] * value;
+                            }
+                            double coverage = fmin(1, fmax(0, luminance)) * alpha;
+                            destination[y * grayStride + x] = (UInt8)lrint(fmin(1, fmax(0, coverage)) * 255);
+                        }
+                    }
+                    image = CGBitmapContextCreateImage(gray);
+                    stride = grayStride;
+                    CGContextRelease(gray);
+                }
+            }
         } @finally {
             CGContextRelease(bitmap);
         }

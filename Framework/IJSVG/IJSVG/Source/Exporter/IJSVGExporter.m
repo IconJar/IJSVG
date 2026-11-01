@@ -1132,6 +1132,7 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
+/// Exports gradient stops with their profiles and separate opacity.
 - (void)applyGradientFromPaint:(IJSVGGradientPaint*)paint parentPaint:(IJSVGPaint*)parentPaint stroke:(BOOL)stroke toElement:(IJSVGExportElement*)element
 {
     IJSVGGradient* gradient = paint.gradient;
@@ -1202,7 +1203,11 @@ NSString* IJSVGHash(NSString* key)
         [stop setAttributeWithName:IJSVGAttributeOffset stringValue:offset];
 
         // add the color
-        IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionAllowShortHand;
+        IJSVGColorStringOptions options = self.colorOptions;
+        if (![IJSVGColor isDisplayP3Color:aColor]) {
+            options |= IJSVGColorStringOptionForceHEX;
+        }
+        aColor = [IJSVGColor changeAlphaOnColor:aColor to:1];
         NSString* stopColor = [self colorStringForColor:aColor flag:IJSVGColorUsageTraitGradientStop options:options];
 
         // dont bother adding default
@@ -1211,7 +1216,7 @@ NSString* IJSVGHash(NSString* key)
         }
 
         // we need to work out the color at this point, annoyingly...
-        CGFloat opacity = CGColorGetAlpha(aColor);
+        CGFloat opacity = CGColorGetAlpha(color);
 
         // is opacity is equal to 1, no need to add it as spec
         // defaults opacity to 1 anyway :)
@@ -1262,6 +1267,7 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
+/// Converts embedded authored SVG colors when compatibility output is requested.
 - (IJSVGExportElement*)elementForImage:(IJSVGImagePaint*)paint fromParent:(IJSVGExportElement*)parent
 {
     IJSVGImage* image = paint.image;
@@ -1318,7 +1324,9 @@ NSString* IJSVGHash(NSString* key)
 
     // encode the image and be done
     NSString* base64String = nil;
-    if (image.sourceData != nil && image.sourceMIMEType != nil) {
+    if (image.embeddedSVG != nil && IJSVGExporterHasOption(_options, IJSVGExporterOptionColorConvertToSRGB)) {
+        base64String = [self compatibilityURLForEmbeddedSVG:image.embeddedSVG];
+    } else if (image.sourceData != nil && image.sourceMIMEType != nil) {
         NSString* encoded = [image.sourceData base64EncodedStringWithOptions:0];
         base64String = [NSString stringWithFormat:@"data:%@;base64,%@", image.sourceMIMEType, encoded];
     } else {
@@ -2200,9 +2208,31 @@ NSString* IJSVGHash(NSString* key)
     return [@"data:image/svg+xml;base64," stringByAppendingString:[data base64EncodedStringWithOptions:0]];
 }
 
+/// Applies compatibility conversion recursively to authored image subdocuments.
+- (NSString*)compatibilityURLForEmbeddedSVG:(IJSVG*)svg
+{
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeZero options:_options floatingPointOptions:_floatingPointOptions];
+    exporter.delegate = self.delegate;
+    NSData* data = [exporter.SVGString dataUsingEncoding:NSUTF8StringEncoding];
+    return [@"data:image/svg+xml;base64," stringByAppendingString:[data base64EncodedStringWithOptions:0]];
+}
+
+/// Preserves filter colors or converts them for compatibility output.
 - (NSDictionary<NSString*, NSString*>*)attributesForFilterPrimitive:(IJSVGFilterPrimitive*)primitive fromPaint:(IJSVGFilterPaint*)filterPaint
 {
     NSMutableDictionary<NSString*, NSString*>* attributes = primitive.parameters.mutableCopy ?: [[NSMutableDictionary alloc] init];
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionColorConvertToSRGB)) {
+        for (NSString* key in @[ IJSVGAttributeFloodColor, IJSVGAttributeLightingColor ]) {
+            CGColorRef color = [IJSVGColor colorFromString:attributes[key]];
+            if ([IJSVGColor isDisplayP3Color:color]) {
+                attributes[key] = [IJSVGColor colorStringFromColor:color options:IJSVGColorStringOptionConvertToSRGB];
+            }
+        }
+    }
+    if (primitive.embeddedSVG != nil && IJSVGExporterHasOption(_options, IJSVGExporterOptionColorConvertToSRGB)) {
+        attributes[IJSVGAttributeHref] = [self compatibilityURLForEmbeddedSVG:primitive.embeddedSVG];
+        [attributes removeObjectForKey:IJSVGAttributeXLink];
+    }
     attributes[IJSVGAttributeIn] = primitive.input;
     attributes[IJSVGAttributeResult] = primitive.result;
     attributes[IJSVGAttributeX] = [primitive.x stringValueWithFloatingPointOptions:_floatingPointOptions];
@@ -2364,6 +2394,7 @@ static BOOL IJSVGExporterFilterHasContextualImage(NSArray<IJSVGFilterPrimitive*>
     [element setAttributeWithName:IJSVGAttributeFilter stringValue:reference];
 }
 
+/// Preserves mask geometry and resolved luminance interpolation during serialization.
 - (void)applyMaskToElement:(IJSVGExportElement*)element fromPaint:(IJSVGPaint*)paint
 {
     // Serialize mask coordinates from the node graph, before raster placement
@@ -2376,6 +2407,7 @@ static BOOL IJSVGExporterFilterHasContextualImage(NSArray<IJSVGFilterPrimitive*>
     IJSVGTextFontResolver* resolver = [[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions];
     IJSVGExportElement* mask = [[IJSVGExportElement alloc] initWithName:@"mask"];
     NSString* identifier = [self identifierForElement:mask];
+    [mask setAttributeWithName:IJSVGAttributeColorInterpolation stringValue:IJSVGColorInterpolationString(node.resolvedColorInterpolation)];
     IJSVGApplyAttributesToElement(@{ IJSVGAttributeID : identifier, IJSVGAttributeMaskUnits : node.units == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse, IJSVGAttributeMaskType : node.maskType == IJSVGMaskTypeAlpha ? @"alpha" : @"luminance", IJSVGAttributeMaskContentUnits : node.contentUnits == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse, IJSVGAttributeX : [[resolver unitByResolvingFontLength:node.x node:node] stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeY : [[resolver unitByResolvingFontLength:node.y node:node] stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeWidth : [[resolver unitByResolvingFontLength:node.width node:node] stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeHeight : [[resolver unitByResolvingFontLength:node.height node:node] stringValueWithFloatingPointOptions:_floatingPointOptions] }, mask);
     CGRect bounds = node.contentUnits == IJSVGUnitObjectBoundingBox ? CGRectMake(0, 0, 1, 1) : paint.viewPort;
     IJSVGPaint* content = [_paintResolver drawablePaintForNode:node inViewPort:bounds];
@@ -2528,11 +2560,16 @@ static double IJSVGExporterAttributeSortIndex(const char* name, NSUInteger fallb
     return [self generateID];
 }
 
+/// Preserves color profiles unless compatibility output is requested.
 - (NSString*)colorStringForColor:(CGColorRef)color flag:(IJSVGColorUsageTraits)flag options:(IJSVGColorStringOptions)options
 {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionColorConvertToSRGB)) {
+        options |= IJSVGColorStringOptionConvertToSRGB;
+        color = [IJSVGColor computeColorSpace:color];
+    }
     NSString* colorString = nil;
     if (_respondsTo.stringForColor == 1) {
-        color = [IJSVGColor computeColorSpace:color];
+        color = [IJSVGColor preservingColorSpace:color];
         colorString = [_delegate svgExporter:self stringForColor:color flags:flag options:options];
         if (colorString != nil) {
             return colorString;

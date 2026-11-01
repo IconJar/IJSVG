@@ -780,6 +780,7 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
     [self addParsedStyle:[IJSVGStyleSheetStyle parseStyleString:rule] withSelectors:selectors];
 }
 
+/// Records cascade order and indexes necessary selector conditions.
 - (void)addParsedStyle:(IJSVGStyleSheetStyle*)style withSelectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors
 {
     IJSVGStyleSheetRule* aRule = [[IJSVGStyleSheetRule alloc] init];
@@ -808,7 +809,30 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
         IJSVGRuleIndexesAppend(&_universalRules, &ruleIndex, 1);
     } else {
         IJSVGStyleSheetIndexRule(_identifierRules, aRule.matchingIdentifiers, aRule.sourceIndex);
-        IJSVGStyleSheetIndexRule(_classRules, aRule.matchingClassNames, aRule.sourceIndex);
+
+        // Every class in a compound selector is required. Index one class per
+        // selector so a shared utility class does not admit every rule.
+        NSMutableSet<NSString*>* classAnchors = [[NSMutableSet alloc] init];
+        for (IJSVGStyleSheetSelector* selector in selectors) {
+            IJSVGStyleSheetSelectorRaw* raw = selector.matchingSelector;
+            if (raw.identifier != nil) {
+                continue;
+            }
+            NSString* anchor = nil;
+            NSUInteger smallestCount = NSUIntegerMax;
+            for (NSString* className in raw.classes) {
+                const IJSVGRuleIndexes* entries = CFDictionaryGetValue(_classRules, (__bridge CFStringRef)className);
+                NSUInteger count = entries == NULL ? 0 : entries->count;
+                if (anchor == nil || count < smallestCount || (count == smallestCount && [className compare:anchor] == NSOrderedAscending)) {
+                    anchor = className;
+                    smallestCount = count;
+                }
+            }
+            if (anchor != nil) {
+                [classAnchors addObject:anchor];
+            }
+        }
+        IJSVGStyleSheetIndexRule(_classRules, classAnchors, aRule.sourceIndex);
         IJSVGStyleSheetIndexRule(_tagRules, aRule.matchingTagNames, aRule.sourceIndex);
     }
 }

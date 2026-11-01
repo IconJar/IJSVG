@@ -16,6 +16,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorStringOptions) {
     IJSVGColorStringOptionForceHEX = 1 << 1,
     IJSVGColorStringOptionAllowShortHand = 1 << 2,
     IJSVGColorStringOptionAllowRRGGBBAA = 1 << 3,
+    IJSVGColorStringOptionConvertToSRGB = 1 << 4,
     IJSVGColorStringOptionDefault = IJSVGColorStringOptionAllowShortHand
 };
 
@@ -178,6 +179,18 @@ FOUNDATION_EXPORT NSString* const IJSVGColorCurrentColorName;
 // Shared sRGB color space, owned by IJSVG.
 + (CGColorSpaceRef)defaultColorSpace;
 + (CGColorSpaceRef)linearRGBColorSpace;
+
+/// Shared Display P3 space for authored colors.
++ (CGColorSpaceRef)displayP3ColorSpace CF_RETURNS_NOT_RETAINED;
+
+/// Preserves P3 colors while retaining legacy normalization for other colors.
++ (CGColorRef _Nullable)preservingColorSpace:(CGColorRef _Nullable)color CF_RETURNS_NOT_RETAINED;
+
+/// Returns whether a color uses encoded Display P3 components.
++ (BOOL)isDisplayP3Color:(CGColorRef _Nullable)color;
+
+/// Shared extended sRGB spaces preserve wide gamut gradient interpolation.
++ (CGColorSpaceRef)extendedRGBColorSpace:(BOOL)linear CF_RETURNS_NOT_RETAINED;
 
 + (CGColorRef)blackColor;
 + (CGColorRef)whiteColor;

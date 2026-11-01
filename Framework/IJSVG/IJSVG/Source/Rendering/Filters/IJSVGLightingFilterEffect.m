@@ -210,12 +210,13 @@ static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w
     });
 }
 
+/// Converts lighting colors into the declared extended interpolation space.
 static IJSVGLightingVector IJSVGLightingColor(CGColorRef color, IJSVGFilterContext* context)
 {
     // The light has one color so only one pixel needs color conversion.
     CIImage* flood = [context floodWithColor:color opacity:1];
     float colorValues[4] = { 0 };
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(context.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(context.linearRGB ? kCGColorSpaceExtendedLinearSRGB : kCGColorSpaceExtendedSRGB);
     [context.context render:flood toBitmap:colorValues rowBytes:sizeof(colorValues) bounds:CGRectMake(0.f, 0.f, 1.f, 1.f) format:kCIFormatRGBAf colorSpace:space];
     CGColorSpaceRelease(space);
     return (IJSVGLightingVector) { colorValues[0], colorValues[1], colorValues[2] };

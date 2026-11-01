@@ -101,6 +101,20 @@ bitmap exports or Display P3 when that destination is needed. The overload
 preserves backing scale and flipping and reports unsupported color spaces or
 bitmap creation failures through the existing error API.
 
+Display P3 colors can be authored as `color(display-p3 1 0.3 0 / 0.5)`.
+Numbers, percentages, calculations, and optional alpha are supported. Color
+storage and replacements retain the P3 profile, including extended components.
+Hex, named colors, and `rgb()` retain their existing sRGB interpretation.
+Gradients retain SVG sRGB or linearRGB interpolation using extended components.
+
+SVG export preserves P3 color functions by default. Use
+`IJSVGExporterOptionColorConvertToSRGB` (`.colorConvertToSRGB` in Swift) for
+compatibility output. This option is deliberately excluded from `.all`.
+`IJSVGColorStringOptionForceHEX` also converts to sRGB before formatting.
+Raster output still defaults to sRGB; request a Display P3 destination to retain
+wide gamut pixels. P3 filter rendering uses the color managed Core Image path;
+the specialized sRGB filter batching and SIMD paths remain restricted to sRGB.
+
 SVG and CSS support is still incomplete, and some artwork may render differently
 from a browser. Please report rendering or export issues with a small example SVG.
 Performance improvements depend on the document and the effects it uses.

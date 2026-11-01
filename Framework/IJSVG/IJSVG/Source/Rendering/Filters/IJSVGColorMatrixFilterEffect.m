@@ -19,6 +19,7 @@
     return (type == IJSVGFilterColorMatrixTypeMatrix) && values.count == 20 && values[18].doubleValue > 1.;
 }
 
+/// Prepares matrix coefficients and identifies operations that change only alpha.
 + (NSDictionary<NSString*, id>*)preparedMatrixForPrimitive:(IJSVGFilterPrimitive*)primitive
 {
     return [primitive preparedValueForKey:@"colorMatrix"
@@ -49,8 +50,8 @@
                                           matrix[17] = .0721;
                                       }
 
-                                      // Changing only opacity does not need color conversion.
-                                      // Still limit each color value after every filter.
+                                      // Keep matrix classification for callers that inspect its coefficients.
+                                      // The rendering path still clamps in the primitive color space.
                                       BOOL opacityOnly = isfinite(matrix[18]) && matrix[18] >= 0 && matrix[18] <= 1;
                                       for (NSUInteger i = 0; i < 20 && opacityOnly; i++) {
                                           if (i != 18 && matrix[i] != ((i == 0 || i == 6 || i == 12) ? 1. : 0.)) {
@@ -69,6 +70,7 @@
                                   }];
 }
 
+/// Applies the matrix and required clamp in the primitive color space.
 - (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive inputs:(NSArray<CIImage*>*)inputs region:(CGRect)region context:(IJSVGFilterContext*)context
 {
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
@@ -76,11 +78,10 @@
     if (prepared.count == 0) {
         return CIImage.emptyImage;
     }
-    BOOL opacityOnly = [prepared[@"opacityOnly"] boolValue];
     NSDictionary<NSString*, CIVector*>* parameters = prepared[@"parameters"];
-    CIImage* image = [(opacityOnly ? input : [context imageInPrimitiveColorSpace:input]) imageByApplyingFilter:@"CIColorMatrix" withInputParameters:parameters];
+    CIImage* image = [[context imageInPrimitiveColorSpace:input] imageByApplyingFilter:@"CIColorMatrix" withInputParameters:parameters];
     image = [image imageByApplyingFilter:@"CIColorClamp" withInputParameters:@{ @"inputMinComponents" : [CIVector vectorWithX:0 Y:0 Z:0 W:0], @"inputMaxComponents" : [CIVector vectorWithX:1 Y:1 Z:1 W:1] }];
-    return opacityOnly ? image : [context imageFromPrimitiveColorSpace:image];
+    return [context imageFromPrimitiveColorSpace:image];
 }
 
 @end

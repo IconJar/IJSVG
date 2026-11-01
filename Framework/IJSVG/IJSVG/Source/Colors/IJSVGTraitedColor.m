@@ -45,9 +45,10 @@
     return other != nil && CGColorEqualToColor(self.color, other.color);
 }
 
+/// Retains source color identity without reducing its gamut.
 - (void)setColor:(CGColorRef)color
 {
-    CGColorRef retained = CGColorRetain([IJSVGColor computeColorSpace:color]);
+    CGColorRef retained = CGColorRetain([IJSVGColor preservingColorSpace:color]);
     CGColorRelease(_color);
     _color = retained;
 }

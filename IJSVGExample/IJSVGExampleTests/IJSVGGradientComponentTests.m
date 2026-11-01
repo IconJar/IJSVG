@@ -30,6 +30,7 @@
     return pixels;
 }
 
+/// Compares stop conversion with Quartz using the matching interpolation gamut.
 - (void)testComponentsMatchColorArrayConstruction
 {
     NSColor* gray = [NSColor colorWithGenericGamma22White:0.4 alpha:0.3];
@@ -60,7 +61,13 @@
             for (NSColor* color in colors) {
                 [cgColors addObject:(__bridge id)color.CGColor];
             }
-            CGGradientRef reference = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace, (__bridge CFArrayRef)cgColors, gradient.locations);
+
+            // This fixture knows which source colors are P3 independently of
+            // the implementation helper. Numerical interpolation is also
+            // checked against explicit D65 matrices in the P3 audit tests.
+            CGColorSpaceRef space = CGColorSpaceCreateWithName([colors containsObject:p3] ? kCGColorSpaceExtendedSRGB : kCGColorSpaceSRGB);
+            CGGradientRef reference = CGGradientCreateWithColors(space, (__bridge CFArrayRef)cgColors, gradient.locations);
+            CGColorSpaceRelease(space);
             CGGradientRef actual = gradient.CGGradient;
             if (colors.count == 1 && gradient.locations == NULL) {
                 XCTAssertTrue(reference == NULL);

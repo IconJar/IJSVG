@@ -61,6 +61,7 @@ IJSVGCSSWideKeyword IJSVGCSSWideKeywordFromString(NSString* value)
     return IJSVGCSSWideKeywordUnknown;
 }
 
+/// Classifies supported CSS functions without allocating strings.
 IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
 {
     if (name == NULL) {
@@ -139,6 +140,9 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
             }
             if (strcmp(normalized, "inset") == 0) {
                 return IJSVGCSSFunctionInset;
+            }
+            if (strcmp(normalized, "color") == 0) {
+                return IJSVGCSSFunctionColor;
             }
             if (strcmp(normalized, "oklch") == 0) {
                 return IJSVGCSSFunctionOKLCH;
