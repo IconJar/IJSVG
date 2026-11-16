@@ -349,6 +349,7 @@ void IJSVGParseEffectsAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContex
     IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeFilter, &attributes->filter);
 }
 
+/// Resolve deferred effects and discard invalid clipping references.
 void IJSVGApplyDeferredAttributes(const IJSVGNodeDeferredAttributes* attributes, IJSVGNode* node, IJSVGParser* parser, IJSVGXMLNode* element)
 {
     IJSVGGraphicsNode* graphics = (IJSVGGraphicsNode*)node;
@@ -361,7 +362,10 @@ void IJSVGApplyDeferredAttributes(const IJSVGNodeDeferredAttributes* attributes,
     if (attributes->clipPath != nil) {
         NSString* identifier = [IJSVGUtils defURL:attributes->clipPath];
         if (identifier != nil) {
-            graphics.clipPath = (id)[parser computeDetachedNodeWithIdentifier:identifier referencingNode:graphics element:element];
+            IJSVGNode* definition = [parser computeDetachedNodeWithIdentifier:identifier referencingNode:graphics element:element];
+
+            // Only clipPath elements can supply clipping geometry.
+            graphics.clipPath = definition.type == IJSVGNodeTypeClipPath ? (IJSVGClipPath*)definition : nil;
         } else {
             graphics.clipPath = [IJSVGClipPath clipPathWithBasicShape:attributes->clipPath];
         }
