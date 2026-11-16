@@ -365,9 +365,9 @@
     IJSVGXMLDocumentDestroy(document);
 }
 
-- (void)testCXMLRejectsMalformedInputAndCustomEntityReferences
+- (void)testCXMLRejectsMalformedInputAndUnsafeEntityReferences
 {
-    for (NSString* source in @[ @"<svg><g></svg>", @"<svg a='1' a='2'/>", @"<svg><q:g/></svg>", @"<svg>&missing;</svg>", @"<!DOCTYPE svg [<!ENTITY unused 'ignored'>]><svg/>", @"<!DOCTYPE svg [<!ENTITY external SYSTEM 'file:///nonexistent/entity'>]><svg>&external;</svg>", @"<!DOCTYPE svg [<!ENTITY % p '<!ELEMENT svg ANY>'>%p;]><svg/>" ]) {
+    for (NSString* source in @[ @"<svg><g></svg>", @"<svg a='1' a='2'/>", @"<svg><q:g/></svg>", @"<svg>&missing;</svg>", @"<!DOCTYPE svg [<!ENTITY external SYSTEM 'file:///nonexistent/entity'>]><svg>&external;</svg>", @"<!DOCTYPE svg [<!ENTITY % p '<!ELEMENT svg ANY>'>%p;]><svg/>", @"<!DOCTYPE svg [<!ENTITY a 'hello'><!ENTITY b '&a;&a;'>]><svg>&b;</svg>", @"<!DOCTYPE svg [<!ENTITY a '<rect/>'>]><svg>&a;</svg>", @"<!DOCTYPE svg [<!ENTITY a '&#38;a;'>]><svg>&a;</svg>" ]) {
         NSData* bytes = [source dataUsingEncoding:NSUTF8StringEncoding];
         IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
         XCTAssertEqual(document, NULL, @"%@", source);
@@ -376,8 +376,96 @@
     NSString* source = @"<!DOCTYPE svg [<!ENTITY greeting 'hello'>]><svg><title>&greeting;</title></svg>";
     NSData* bytes = [source dataUsingEncoding:NSUTF8StringEncoding];
     IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
-    XCTAssertEqual(document, NULL);
+    XCTAssertNotEqual(document, NULL);
+    XCTAssertEqualObjects(IJSVGXMLText(IJSVGXMLFirstChild(IJSVGXMLRoot(document))), @"hello");
     IJSVGXMLDocumentDestroy(document);
+}
+
+- (void)testCSSSVGOriginalFileRendersCorrectly
+{
+    // Exact css.svg attachment, including its Illustrator header and CRLF line endings.
+    NSString* source = @"<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"
+                       @"<!-- Generator: Adobe Illustrator 16.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->\r\n"
+                       @"<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\" [\r\n"
+                       @"\t<!ENTITY ns_extend \"http://ns.adobe.com/Extensibility/1.0/\">\r\n"
+                       @"\t<!ENTITY ns_ai \"http://ns.adobe.com/AdobeIllustrator/10.0/\">\r\n"
+                       @"\t<!ENTITY ns_graphs \"http://ns.adobe.com/Graphs/1.0/\">\r\n"
+                       @"\t<!ENTITY ns_vars \"http://ns.adobe.com/Variables/1.0/\">\r\n"
+                       @"\t<!ENTITY ns_imrep \"http://ns.adobe.com/ImageReplacement/1.0/\">\r\n"
+                       @"\t<!ENTITY ns_sfw \"http://ns.adobe.com/SaveForWeb/1.0/\">\r\n"
+                       @"\t<!ENTITY ns_custom \"http://ns.adobe.com/GenericCustomNamespace/1.0/\">\r\n"
+                       @"\t<!ENTITY ns_adobe_xpath \"http://ns.adobe.com/XPath/1.0/\">\r\n"
+                       @"]>\r\n"
+                       @"<svg version=\"1.1\" xmlns:x=\"&ns_extend;\" xmlns:i=\"&ns_ai;\" xmlns:graph=\"&ns_graphs;\"\r\n"
+                       @"\t xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" x=\"0px\" y=\"0px\" width=\"512px\" height=\"512.001px\"\r\n"
+                       @"\t viewBox=\"0 0 512 512.001\" enable-background=\"new 0 0 512 512.001\" xml:space=\"preserve\">\r\n"
+                       @"\r\n"
+                       @"<style>\r\n"
+                       @"\r\n"
+                       @"\tline {\r\n"
+                       @"\t\tfill: white;\r\n"
+                       @"\t\tstroke: white;\r\n"
+                       @"\t\tstroke-width: 5;\r\n"
+                       @"\t}\r\n"
+                       @"\r\n"
+                       @"\tg + g.woop line.woah#oh ~ rect {\r\n"
+                       @"\t\tfill: blue;\r\n"
+                       @"\t}\r\n"
+                       @"\r\n"
+                       @"\tg + g.woop > line ~ rect.bacon#really {\r\n"
+                       @"\t\tfill: red;\r\n"
+                       @"\t}\r\n"
+                       @"\r\n"
+                       @"\r\n"
+                       @"</style>\r\n"
+                       @"\r\n"
+                       @"<g>\r\n"
+                       @"</g>\r\n"
+                       @"<g class=\"woop\">\r\n"
+                       @"\t<rect width=\"512\" height=\"512\"/>\r\n"
+                       @"\t<line class=\"woah\" id=\"oh\" x1=\"0\" y1=\"0\" x2=\"512\" y2=\"512\"/>\r\n"
+                       @"\t<rect width=\"256\" height=\"256\"/>\r\n"
+                       @"\t<rect class=\"bacon\" id=\"really\" width=\"128\" height=\"128\"/>\r\n"
+                       @"</g>\r\n"
+                       @"\r\n"
+                       @"</svg>\r\n";
+    for (NSNumber* encoding in @[ @(NSUTF8StringEncoding), @(NSUTF16StringEncoding) ]) {
+        NSData* bytes = [source dataUsingEncoding:encoding.unsignedIntegerValue];
+        IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
+        XCTAssertNotEqual(document, NULL);
+        XCTAssertEqual(IJSVGXMLType(IJSVGXMLRoot(document)), IJSVGNodeTypeSVG);
+        IJSVGXMLDocumentDestroy(document);
+    }
+    NSString* reference = @"<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512.001' viewBox='0 0 512 512.001'>"
+                          @"<rect width='512' height='512'/>"
+                          @"<line x1='0' y1='0' x2='512' y2='512' stroke='white' stroke-width='5'/>"
+                          @"<rect width='256' height='256' fill='blue'/>"
+                          @"<rect width='128' height='128' fill='red'/></svg>";
+    CGSize size = CGSizeMake(64, 64);
+    XCTAssertEqualObjects(IJSVGTestRGBADataForSVG(source, size), IJSVGTestRGBADataForSVG(reference, size));
+}
+
+- (void)testCXMLBoundsLiteralEntitiesAndRejectsUnresolvedReferencesWithExternalDTD
+{
+    for (NSNumber* length in @[ @4096, @4097 ]) {
+        NSString* value = [@"x" stringByPaddingToLength:length.unsignedIntegerValue withString:@"x" startingAtIndex:0];
+        NSString* source = [NSString stringWithFormat:@"<!DOCTYPE svg [<!ENTITY value '%@'>]><svg><title>&value;</title></svg>", value];
+        NSData* bytes = [source dataUsingEncoding:NSUTF8StringEncoding];
+        IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
+        XCTAssertEqual(document != NULL, length.unsignedIntegerValue == 4096);
+        if (document != NULL) {
+            XCTAssertEqualObjects(IJSVGXMLText(IJSVGXMLFirstChild(IJSVGXMLRoot(document))), value);
+        }
+        IJSVGXMLDocumentDestroy(document);
+    }
+    for (NSString* declarations in @[ @"", @"[<!ENTITY missing SYSTEM 'file:///nonexistent/entity'>]",
+             @"[<!ENTITY missing '&nested;'><!ENTITY missing 'replacement'>]" ]) {
+        NSString* source = [NSString stringWithFormat:@"<!DOCTYPE svg SYSTEM 'http://example.invalid/test.dtd' %@><svg>&missing;</svg>", declarations];
+        NSData* bytes = [source dataUsingEncoding:NSUTF8StringEncoding];
+        IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
+        XCTAssertEqual(document, NULL);
+        IJSVGXMLDocumentDestroy(document);
+    }
 }
 
 - (void)testCXMLIgnoresDoctypeAndPreservesStandardEscapes
@@ -385,7 +473,9 @@
     NSArray<NSString*>* declarations = @[ @"<!DOCTYPE svg>",
         @"<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>",
         @"<!DOCTYPE svg SYSTEM 'file:///nonexistent/ijsvg-test.dtd'>",
-        @"<!DOCTYPE svg [<!ATTLIST svg fill CDATA 'red'>]>" ];
+        @"<!DOCTYPE svg [<!ATTLIST svg fill CDATA 'red'>]>",
+        @"<!DOCTYPE svg [<!ENTITY unused 'ignored'>]>",
+        @"<!DOCTYPE svg [<!ENTITY unused SYSTEM 'file:///nonexistent/entity'>]>" ];
     for (NSString* declaration in declarations) {
         NSString* source = [declaration stringByAppendingString:@"<svg id='a&amp;b'><title>&lt;&gt;&amp;&quot;&apos;&#65;&#x42;</title></svg>"];
         for (NSNumber* encoding in @[ @(NSUTF8StringEncoding), @(NSUTF16StringEncoding) ]) {

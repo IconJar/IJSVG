@@ -139,6 +139,7 @@ static BOOL IJSVGPrepareMetalBlur(void)
     if (!isfinite(offset.width) || !isfinite(offset.height) || color == NULL || CGColorGetNumberOfComponents(color) != 4) {
         return nil;
     }
+
     // The shader reads tint components in the bitmap color profile.
     // Keep mismatched profiles on the general evaluator so wide gamut colors
     // are converted after compositing, without clipping intermediate values.

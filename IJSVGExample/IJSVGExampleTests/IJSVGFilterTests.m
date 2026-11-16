@@ -2144,7 +2144,9 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 - (NSData*)renderConvolutionDocument:(NSString*)document
 {
     IJSVG* svg = IJSVGTestSVGObject(document);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef bitmap = CGBitmapContextCreate(NULL, 30, 10, 8, 120, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);

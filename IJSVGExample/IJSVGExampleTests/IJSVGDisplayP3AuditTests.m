@@ -789,6 +789,7 @@ static void P3AuditFromSRGB(const double rgb[3], double p3[3])
                 alpha = fmax(alpha, expected[channel]);
             }
             alpha = fmin(1, alpha);
+
             // Read in the primitive color space to compare premultiplied output directly.
             NSArray* actual = [self pixel:svg space:[interpolation isEqualToString:@"linearRGB"] ? kCGColorSpaceExtendedLinearSRGB : kCGColorSpaceExtendedSRGB];
             for (NSUInteger channel = 0; channel < 3; channel++) {
@@ -809,6 +810,7 @@ static void P3AuditFromSRGB(const double rgb[3], double p3[3])
         double expectedRGB[3], expectedP3[3];
         for (NSUInteger channel = 0; channel < 3; channel++) {
             double value = [interpolation isEqualToString:@"linearRGB"] ? P3AuditLinear(rgb[channel]) : rgb[channel];
+
             // P3 lighting retains signed, extended interpolation components.
             value *= .5;
             expectedRGB[channel] = [interpolation isEqualToString:@"linearRGB"] ? P3AuditEncoded(value) : value;

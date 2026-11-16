@@ -324,13 +324,14 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
         IJSVGCacheTestDrawingPaint* root = [[IJSVGCacheTestDrawingPaint alloc] init];
         root.drawingBlock = ^(CGContextRef destination) {
             batched = [IJSVGFilterPaint renderBatchedPaints:[NSSet setWithArray:paints]
-                                                inContext:destination
-                                             drawingBlock:^(CGContextRef context) {
-                                                 for (IJSVGFilterPaint* paint in paints) {
-                                                     [IJSVGFilterPaint renderPaint:paint inBitmapContext:context];
-                                                 }
-                                             }];
+                                                  inContext:destination
+                                               drawingBlock:^(CGContextRef context) {
+                                                   for (IJSVGFilterPaint* paint in paints) {
+                                                       [IJSVGFilterPaint renderPaint:paint inBitmapContext:context];
+                                                   }
+                                               }];
         };
+
         // Register the destination before batch eligibility checks its profile.
         [IJSVGFilterPaint renderPaint:root inBitmapContext:bitmap];
         XCTAssertTrue(batched);

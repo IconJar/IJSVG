@@ -14,6 +14,8 @@
 #include <stdint.h>
 
 struct _xmlDict;
+struct _xmlDoc;
+struct _xmlParserCtxt;
 typedef struct IJSVGXMLDocument IJSVGXMLDocument;
 
 // Document owned storage. Node and attribute pointers remain stable after parsing.
@@ -71,6 +73,8 @@ struct IJSVGXMLDocument {
     uint32_t root;
     uint32_t current;
     struct _xmlDict* names;
+    struct _xmlDoc* entities;
+    struct _xmlParserCtxt* parser;
     bool failed;
 };
 
@@ -83,7 +87,8 @@ typedef struct {
 } IJSVGXMLAttributeList;
 
 // Document lifecycle. Attribute lists and byte ranges borrow document storage.
-// DOCTYPE declarations do not load a DTD. Custom entity references are rejected.
+// DOCTYPE declarations do not load a DTD. Only bounded, literal internal entities
+// are supported; external, parameter and nested entity references are rejected.
 IJSVGXMLDocument* IJSVGXMLDocumentCreate(const void* bytes, size_t length);
 void IJSVGXMLDocumentDestroy(IJSVGXMLDocument* document);
 

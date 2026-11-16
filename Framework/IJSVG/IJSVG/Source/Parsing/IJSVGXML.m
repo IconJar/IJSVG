@@ -306,18 +306,60 @@ static void IJSVGXMLParserProcessingInstruction(void* context, const xmlChar* ta
     }
 }
 
+static void IJSVGXMLParserEntityDeclaration(void* context, const xmlChar* name, int type,
+    const xmlChar* publicID, const xmlChar* systemID, xmlChar* content)
+{
+    // Illustrator uses literal internal entities for namespace URLs. Retain only
+    // small text values, never external resources, markup or recursive expansion.
+    if (type == XML_INTERNAL_PARAMETER_ENTITY || type == XML_EXTERNAL_PARAMETER_ENTITY) {
+        return;
+    }
+    if (type != XML_INTERNAL_GENERAL_ENTITY || content == NULL
+        || xmlStrlen(content) > 4096 || xmlStrchr(content, '&') != NULL
+        || xmlStrchr(content, '<') != NULL) {
+        content = NULL;
+    }
+    IJSVGXMLDocument* document = context;
+    if (document->entities == NULL) {
+        document->entities = xmlNewDoc(BAD_CAST "1.0");
+        if (document->entities == NULL
+            || xmlCreateIntSubset(document->entities, BAD_CAST "svg", NULL, NULL) == NULL) {
+            document->failed = true;
+            return;
+        }
+    }
+
+    // XML keeps the first declaration of a name. A NULL-content placeholder
+    // reserves rejected declarations so a later duplicate cannot replace them.
+    if (xmlGetDocEntity(document->entities, name) == NULL
+        && xmlAddDocEntity(document->entities, name, XML_INTERNAL_GENERAL_ENTITY, NULL, NULL, content) == NULL) {
+        document->failed = true;
+    }
+}
+
 static xmlEntityPtr IJSVGXMLParserGetEntity(void* context, const xmlChar* name)
 {
+    IJSVGXMLDocument* document = context;
     xmlEntityPtr result = xmlGetPredefinedEntity(name);
     if (result == NULL) {
-        ((IJSVGXMLDocument*)context)->failed = true;
+        result = xmlGetDocEntity(document->entities, name);
+        if (result != NULL && result->content == NULL) {
+            result = NULL;
+        }
+    }
+
+    // libxml also asks about entities while declaring them. A missing value is
+    // only an error when referenced. Fail explicitly even if an external DTD
+    // would cause libxml to report an undeclared entity as just a warning.
+    if (result == NULL && document->parser->instate != XML_PARSER_ENTITY_DECL) {
+        document->failed = true;
     }
     return result;
 }
 
 static xmlEntityPtr IJSVGXMLParserGetParameterEntity(void* context, const xmlChar* name)
 {
-    // Entities defined by a DTD are not supported. Never resolve an external entity.
+    // Parameter entities may introduce further declarations; never resolve them.
     ((IJSVGXMLDocument*)context)->failed = true;
     return NULL;
 }
@@ -341,6 +383,7 @@ void IJSVGXMLDocumentDestroy(IJSVGXMLDocument* document)
     free(document->attributes);
     free(document->bytes);
     xmlDictFree(document->names);
+    xmlFreeDoc(document->entities);
     free(document);
 }
 
@@ -365,8 +408,9 @@ static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t le
     handler.comment = IJSVGXMLParserComment;
     handler.processingInstruction = IJSVGXMLParserProcessingInstruction;
     handler.getEntity = IJSVGXMLParserGetEntity;
+    handler.entityDecl = IJSVGXMLParserEntityDeclaration;
 
-    // Only standard XML entities are supported. No DTD handlers or external subset loader.
+    // No external subset loader; parameter entities remain unsupported.
     handler.getParameterEntity = IJSVGXMLParserGetParameterEntity;
     xmlParserCtxtPtr parser = xmlCreatePushParserCtxt(&handler, document, NULL, 0, NULL);
     if (parser == NULL) {
@@ -381,6 +425,7 @@ static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t le
         return NULL;
     }
     document->names = parser->dict;
+    document->parser = parser;
     xmlCtxtUseOptions(parser, XML_PARSE_NONET | XML_PARSE_NOENT | XML_PARSE_NOBLANKS | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
 
     // Bound parser lookahead for large documents without relaxing XML limits.
@@ -401,6 +446,9 @@ static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t le
     xmlFreeDoc(parser->myDoc);
     parser->myDoc = NULL;
     xmlFreeParserCtxt(parser);
+    document->parser = NULL;
+    xmlFreeDoc(document->entities);
+    document->entities = NULL;
     if (!valid) {
         IJSVGXMLDocumentDestroy(document);
         return NULL;
