@@ -38,16 +38,12 @@
     return self;
 }
 
+/// Merges traits into an equivalent stored color using one set lookup.
 - (void)addColor:(IJSVGTraitedColor*)color
 {
-    if ([_colors containsObject:color] == YES) {
-        void (^handler)(IJSVGTraitedColor* _Nonnull obj, BOOL* _Nonnull stop) = ^(IJSVGTraitedColor* _Nonnull obj, BOOL* _Nonnull stop) {
-            if ([obj isEqualToTraitedColor:color] == YES) {
-                [obj addTraits:color.traits];
-                *stop = YES;
-            }
-        };
-        [_colors enumerateObjectsUsingBlock:handler];
+    IJSVGTraitedColor* existingColor = [_colors member:color];
+    if (existingColor != nil) {
+        [existingColor addTraits:color.traits];
         return;
     }
     _traits |= color.traits;
